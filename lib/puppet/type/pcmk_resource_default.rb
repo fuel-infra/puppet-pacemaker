@@ -37,6 +37,7 @@ module Puppet
       desc %q(Value of the rsc_defaults.  It is expected that this will be a single
         value but we aren't validating string vs. integer vs. boolean because
         cluster rsc_resources can range the gambit.)
+      isrequired
     end
 
     autorequire(:service) do
@@ -45,11 +46,6 @@ module Puppet
 
     autorequire(:pcmk_shadow) do
       [parameter(:cib).value] if parameter :cib
-    end
-
-    validate do
-      break if parameter(:ensure) and parameter(:ensure).value == :absent
-      fail 'Option "value" is required!' unless parameter :value
     end
 
   end

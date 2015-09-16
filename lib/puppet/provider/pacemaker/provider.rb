@@ -41,13 +41,13 @@ class Puppet::Provider::Pacemaker < Puppet::Provider
   include ::Pacemaker::Wait
   include ::Pacemaker::Xml
 
-  def initialize(*args)
-    cib_reset 'initialize'
-    super
-  end
+  #def initialize(*args)
+  #  cib_reset 'initialize'
+  #  super
+  #end
 
   # reset all saved variables to obtain new data
-  def cib_reset(comment)
+  def cib_reset(comment=nil)
     message = 'Call: cib_reset'
     message += " (#{comment})" if comment
     debug message
@@ -70,8 +70,6 @@ class Puppet::Provider::Pacemaker < Puppet::Provider
 end
 
 # TODO: groups
-# TODO: op_defaults
-# TODO: split to subfiles
 # TODO: resource <-> constraint autorequire/autobefore
 # TODO: constraint fail is resource missing
 # TODO: resource refuse to delete if constrains present or remove them too

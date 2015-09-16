@@ -18,7 +18,7 @@ pcmk_resource { 'test2' :
 }
 
 pcmk_colocation { 'test2_with_and_after_test1' :
-  first  => 'test2',
-  second => 'test1',
+  first  => 'test1',
+  second => 'test2',
   score  => '200',
 }

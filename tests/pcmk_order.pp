@@ -17,8 +17,8 @@ pcmk_resource { 'test2' :
   },
 }
 
-pcmk_order { 'test2_afetr_test1' :
-  first  => 'test2',
-  second => 'test1',
+pcmk_order { 'test2_after_test1' :
+  first  => 'test1',
+  second => 'test2',
   score  => '200',
 }
