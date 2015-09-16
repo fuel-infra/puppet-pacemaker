@@ -12,8 +12,6 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
   commands :crm_resource => 'crm_resource'
   commands :crm_attribute => 'crm_attribute'
 
-  #TODO instances
-  #TODO prefetch
   #TODO fail if there is no primitive
 
   attr_accessor :property_hash
