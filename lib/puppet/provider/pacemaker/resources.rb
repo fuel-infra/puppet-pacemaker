@@ -115,6 +115,7 @@ module Pacemaker
           complex_meta_attributes = primitive.parent.elements['meta_attributes']
           if complex_meta_attributes
             complex_meta_attributes_structure = children_elements_to_hash complex_meta_attributes, 'name', 'nvpair'
+            complex_meta_attributes_structure = munge_meta_attributes complex_meta_attributes_structure
             complex_structure.store 'meta_attributes', complex_meta_attributes_structure
           end
 
@@ -131,6 +132,7 @@ module Pacemaker
         meta_attributes = primitive.elements['meta_attributes']
         if meta_attributes
           meta_attributes_structure = children_elements_to_hash meta_attributes, 'name', 'nvpair'
+          meta_attributes_structure = munge_meta_attributes meta_attributes_structure
           primitive_structure.store 'meta_attributes', meta_attributes_structure
         end
 
@@ -143,6 +145,18 @@ module Pacemaker
         @primitives_structure.store id, primitive_structure
       end
       @primitives_structure
+    end
+
+    # remove status related meta attributes
+    # @param attributes_from [Hash]
+    # @return [Hash]
+    def munge_meta_attributes(attributes_from)
+      attributes_to = {}
+      attributes_from.each do |name, parameters|
+        next if %w(target-role is-managed).include? name
+        attributes_to.store name, parameters
+        end
+      attributes_to
     end
 
     # check if primitive exists in the confiuguration
