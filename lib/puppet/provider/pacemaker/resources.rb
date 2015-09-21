@@ -99,7 +99,6 @@ module Pacemaker
     # @return [Hash<String => Hash>]
     def primitives
       return @primitives_structure if @primitives_structure
-      wait_for_online 'primitives'
       @primitives_structure = {}
       cib_section_primitives.each do |primitive|
         id = primitive.attributes['id']
@@ -166,6 +165,15 @@ module Pacemaker
     def primitive_type(primitive)
       return unless primitive_exists? primitive
       primitives[primitive]['type']
+    end
+
+    # return primitive complex type
+    # or nil is the primitive is simple
+    # @param primitive [String] primitive id
+    # @return [String] primitive complex type
+    def primitive_complex_type(primitive)
+      return unless primitive_is_complex? primitive
+      primitives[primitive]['complex']['type']
     end
 
     # return the full name of the complex primitive

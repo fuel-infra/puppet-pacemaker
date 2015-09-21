@@ -52,8 +52,6 @@ class Puppet::Provider::Pacemaker < Puppet::Provider
     message += " (#{comment})" if comment
     debug message
 
-    @raw_cib = nil
-    @cib_file = nil
     @cib = nil
 
     @primitives_structure = nil

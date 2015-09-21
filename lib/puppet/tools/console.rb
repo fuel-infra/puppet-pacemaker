@@ -35,7 +35,9 @@ end
 
 common = Puppet::Provider::Pacemaker.new
 if $ARGV[0] and File.exists? $ARGV[0]
-  common.cib_file = $ARGV[0]
+  xml = File.read $ARGV[0]
+  common.cib = xml
 end
+
 common.pry
 

@@ -24,7 +24,9 @@ Puppet::Type.type(:pcmk_operation_default).provide(:ruby, :parent => Puppet::Pro
       parameters[:ensure] = :present
       parameters[:value] = data['value']
       parameters[:name] = title
-      instances << self.new(parameters)
+      instance = self.new(parameters)
+      instance.cib = proxy_instance.cib
+      instances << instance
     end
     instances
   end
@@ -40,11 +42,7 @@ Puppet::Type.type(:pcmk_operation_default).provide(:ruby, :parent => Puppet::Pro
 
   def exists?
     debug "Call: exists? on '#{resource}'"
-    if retrieved?
-      out = present?
-    else
-      out = operation_default_defined? resource[:name]
-    end
+    out = operation_default_defined? resource[:name]
     debug "Return: #{out}"
     out
   end
@@ -53,12 +51,6 @@ Puppet::Type.type(:pcmk_operation_default).provide(:ruby, :parent => Puppet::Pro
   # @return [TrueClass,FalseClass]
   def present?
     property_hash[:ensure] == :present
-  end
-
-  # check if the location data have been either prefetched or retrieved
-  # @return [TrueClass,FalseClass]
-  def retrieved?
-    property_hash.key? :ensure and property_hash.key? :name
   end
 
   def create

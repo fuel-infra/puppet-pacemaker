@@ -173,6 +173,7 @@ module Puppet
         your colocation and order resources too but Puppet won't. Hash contains
         two key-value pairs: type (master, clone) and its name (${type}_{$primitive_name})
         by default')
+
       newvalues 'clone', 'master'
     end
 

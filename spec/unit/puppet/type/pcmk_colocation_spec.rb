@@ -63,22 +63,6 @@ describe Puppet::Type.type(:pcmk_colocation) do
              )[:score]).to eq 'INFINITY'
     end
 
-    it 'should require "first" value' do
-      expect { subject.new(
-          :name => 'mock_colocation',
-          :second => 'b',
-          :score => '100'
-      ) }.to raise_error /Option "first" is required/
-    end
-
-    it 'should require "second" value' do
-      expect { subject.new(
-          :name => 'mock_colocation',
-          :first => 'b',
-          :score => '100'
-      ) }.to raise_error /Option "second" is required/
-    end
-
     describe 'when autorequiring resources' do
       before :each do
         @pcmk_resource_1 = Puppet::Type.type(:pcmk_resource).new(

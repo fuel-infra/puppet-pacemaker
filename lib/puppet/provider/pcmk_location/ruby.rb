@@ -27,7 +27,9 @@ Puppet::Type.type(:pcmk_location).provide(:ruby, :parent => Puppet::Provider::Pa
       parameters = {}
       debug "Prefetch constraint_location: #{title}"
       proxy_instance.retrieve_data data, parameters
-      instances << self.new(parameters)
+      instance = self.new(parameters)
+      instance.cib = proxy_instance.cib
+      instances << instance
     end
     instances
   end
@@ -59,12 +61,8 @@ Puppet::Type.type(:pcmk_location).provide(:ruby, :parent => Puppet::Provider::Pa
 
   def exists?
     debug "Call: exists? on '#{resource}'"
-    if retrieved?
-      out = present?
-    else
-      out = constraint_location_exists? resource[:name]
-      retrieve_data
-    end
+    out = constraint_location_exists? resource[:name]
+    retrieve_data
     debug "Return: #{out}"
     out
   end
@@ -73,12 +71,6 @@ Puppet::Type.type(:pcmk_location).provide(:ruby, :parent => Puppet::Provider::Pa
   # @return [TrueClass,FalseClass]
   def present?
     property_hash[:ensure] == :present
-  end
-
-  # check if the location data have been either prefetched or retrieved
-  # @return [TrueClass,FalseClass]
-  def retrieved?
-    property_hash.key? :ensure and property_hash.key? :name
   end
 
   # Create just adds our resource to the property_hash and flush will take care

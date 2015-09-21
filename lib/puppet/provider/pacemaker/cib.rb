@@ -3,14 +3,12 @@ module Pacemaker
     # get the raw CIB from Pacemaker
     # @return [String] cib xml
     def raw_cib
-      return File.read @cib_file if @cib_file
-      @raw_cib = cibadmin '-Q'
-      if !@raw_cib or @raw_cib == ''
+      raw_cib = cibadmin '-Q'
+      if !raw_cib or raw_cib == ''
         fail 'Could not dump CIB XML!'
       end
-      @raw_cib
+      raw_cib
     end
-    attr_accessor :cib_file
 
     # create a new REXML CIB document
     # @return [REXML::Document] at '/'
@@ -19,10 +17,20 @@ module Pacemaker
       @cib = REXML::Document.new(raw_cib)
     end
 
+    # insert a new cib xml data
+    # @param cib [String] CIB XML text or element
+    def cib=(cib)
+      if cib.is_a? REXML::Document
+        @cib = cib
+      else
+        @cib = REXML::Document.new(cib)
+      end
+    end
+
     # check id the CIB is retrieved and memorized
     # @return [TrueClass,FalseClass]
     def cib?
-      !!@raw_cib
+      !!@cib
     end
 
     # add a new XML element to CIB

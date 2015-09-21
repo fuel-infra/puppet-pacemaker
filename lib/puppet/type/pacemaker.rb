@@ -64,7 +64,7 @@ module Puppet::Type::Pacemaker
   end
 
   # compare meta_attribute hashes
-  # exclude status_metadata from comarsion
+  # exclude status_metadata from comparison
   # @param is [Hash]
   # @param should [Hash]
   # @return [true,false]

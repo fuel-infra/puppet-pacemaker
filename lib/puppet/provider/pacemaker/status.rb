@@ -120,7 +120,6 @@ module Pacemaker
     # @return [Hash<String => Hash>]
     def node_status
       return @node_status_structure if @node_status_structure
-      wait_for_online 'node_status'
       @node_status_structure = {}
       cib_section_node_state.each do |node_state|
         node = attributes_to_hash node_state

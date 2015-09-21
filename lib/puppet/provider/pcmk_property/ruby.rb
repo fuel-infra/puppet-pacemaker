@@ -24,7 +24,9 @@ Puppet::Type.type(:pcmk_property).provide(:ruby, :parent => Puppet::Provider::Pa
       parameters[:ensure] = :present
       parameters[:value] = data['value']
       parameters[:name] = title
-      instances << self.new(parameters)
+      instance = self.new(parameters)
+      instance.cib = proxy_instance.cib
+      instances << instance
     end
     instances
   end
@@ -40,11 +42,7 @@ Puppet::Type.type(:pcmk_property).provide(:ruby, :parent => Puppet::Provider::Pa
 
   def exists?
     debug "Call: exists? on '#{resource}'"
-    if retrieved?
-      out = present?
-    else
-      out = cluster_property_defined? resource[:name]
-    end
+    out = cluster_property_defined? resource[:name]
     debug "Return: #{out}"
     out
   end
@@ -54,13 +52,6 @@ Puppet::Type.type(:pcmk_property).provide(:ruby, :parent => Puppet::Provider::Pa
   def present?
     property_hash[:ensure] == :present
   end
-
-  # check if the location data have been either prefetched or retrieved
-  # @return [TrueClass,FalseClass]
-  def retrieved?
-    property_hash.key? :ensure and property_hash.key? :name
-  end
-
 
   def create
     debug "Call: create on '#{resource}'"

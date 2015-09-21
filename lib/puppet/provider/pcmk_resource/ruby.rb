@@ -28,7 +28,9 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
       parameters = {}
       debug "Prefetch resource: #{title}"
       proxy_instance.retrieve_data data, parameters
-      instances << self.new(parameters)
+      instance = self.new(parameters)
+      instance.cib = proxy_instance.cib
+      instances << instance
     end
     instances
   end
@@ -124,26 +126,20 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
 
   def exists?
     debug "Call: exists? on '#{resource}'"
-    if retrieved?
-      out = present?
-    else
-      out = primitive_exists? resource[:name]
-      retrieve_data
-    end
+    out = primitive_exists? resource[:name]
+    retrieve_data
     debug "Return: #{out}"
     out
   end
 
-  # check if the resource ensure is set to present
+  # check if the location ensure is set to present
   # @return [TrueClass,FalseClass]
   def present?
     property_hash[:ensure] == :present
   end
 
-  # check if the resource data have been either prefetched or retrieved
-  # @return [TrueClass,FalseClass]
-  def retrieved?
-    property_hash.key? :ensure and property_hash.key? :name
+  def complex_change?
+    primitive_complex_type(resource[:name]) != property_hash[:complex_type]
   end
 
   # Create just adds our resource to the property_hash and flush will take care
@@ -173,9 +169,10 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
 
   # use cibadmin to remove the XML section describing this primitive
   def remove_primitive
+    return unless primitive_exists? resource[:name]
     primitive_tag = 'primitive'
-    primitive_tag = complex_type if complex_type
-    cibadmin_delete "<#{primitive_tag} id='#{full_name}'/>", 'resources'
+    primitive_tag = primitive_complex_type resource[:name] if primitive_is_complex? resource[:name]
+    cibadmin_delete "<#{primitive_tag} id='#{primitive_full_name resource[:name]}'/>", 'resources'
   end
 
   # Unlike create we actually immediately delete the item.  Corosync forces us
@@ -224,7 +221,7 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
 
   def full_name
     if complex_type
-      "#{complex_type}-#{resource[:name]}"
+      "#{complex_type}_#{resource[:name]}"
     else
       resource[:name]
     end
@@ -281,6 +278,11 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
 
     unless property_hash[:primitive_type] and property_hash[:primitive_provider] and property_hash[:primitive_class]
       fail 'Primitive class, type and provider should present!'
+    end
+
+    if complex_change?
+      remove_primitive
+      property_hash[:ensure] = :absent
     end
 
     # basic primitive structure
@@ -340,7 +342,6 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
     end
 
     # create and apply XML patch
-    debug "Primitive structure:\n#{primitive_structure.inspect}"
     primitive_patch = xml_document
     primitive_element = xml_primitive primitive_structure
     fail "Could not create XML patch for '#{resource}'" unless primitive_element
