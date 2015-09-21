@@ -82,6 +82,7 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
   def status
     debug "Call: 'status' for Pacemaker service '#{name}' on node '#{hostname}'"
     cib_reset 'service_status'
+    wait_for_online 'service_status'
 
     if pacemaker_options[:cleanup_on_status]
       if not pacemaker_options[:cleanup_only_if_failures] or primitive_has_failures? name, hostname

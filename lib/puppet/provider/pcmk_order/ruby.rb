@@ -25,7 +25,9 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
       parameters = {}
       debug "Prefetch constraint_order: #{title}"
       proxy_instance.retrieve_data data, parameters
-      instances << self.new(parameters)
+      instance = self.new(parameters)
+      instance.cib = proxy_instance.cib
+      instances << instance
     end
     instances
   end
@@ -55,12 +57,8 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
 
   def exists?
     debug "Call: exists? on '#{resource}'"
-    if retrieved?
-      out = present?
-    else
-      out = constraint_order_exists? resource[:name]
-      retrieve_data
-    end
+    out = constraint_order_exists? resource[:name]
+    retrieve_data
     debug "Return: #{out}"
     out
   end
@@ -69,12 +67,6 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
   # @return [TrueClass,FalseClass]
   def present?
     property_hash[:ensure] == :present
-  end
-
-  # check if the order data have been either prefetched or retrieved
-  # @return [TrueClass,FalseClass]
-  def retrieved?
-    property_hash.key? :ensure and property_hash.key? :name
   end
 
   # Create just adds our resource to the property_hash and flush will take care

@@ -274,8 +274,8 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
       }
 
       data = <<-eos
-<clone id='clone-my_resource'>
-  <meta_attributes id='clone-my_resource-meta_attributes'>
+<clone id='clone_my_resource'>
+  <meta_attributes id='clone_my_resource-meta_attributes'>
     <nvpair id='my_resource-meta_attributes-interleave' name='interleave' value='true'/>
   </meta_attributes>
   <primitive class='ocf' id='my_resource' provider='pacemaker' type='Dummy'>
@@ -322,6 +322,7 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
   </operations>
 </primitive>
       eos
+      provider.stubs(:complex_change?).returns false
       provider.expects(:cibadmin_modify).with data, 'resources'
       provider.flush
     end
@@ -331,8 +332,8 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
       provider.stubs(:primitives).returns primitives_library_data
       provider.retrieve_data
       data = <<-eos
-<master id='master-p_rabbitmq-server'>
-  <meta_attributes id='master-p_rabbitmq-server-meta_attributes'>
+<master id='master_p_rabbitmq-server'>
+  <meta_attributes id='master_p_rabbitmq-server-meta_attributes'>
     <nvpair id='p_rabbitmq-server-meta_attributes-interleave' name='interleave' value='true'/>
     <nvpair id='p_rabbitmq-server-meta_attributes-master-max' name='master-max' value='1'/>
     <nvpair id='p_rabbitmq-server-meta_attributes-master-node-max' name='master-node-max' value='1'/>
@@ -360,15 +361,54 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
   </primitive>
 </master>
       eos
+      provider.stubs(:complex_change?).returns false
       provider.expects(:cibadmin_modify).with data, 'resources'
+      provider.flush
+    end
+
+    it 'should be able to chage from a complex to a simple resource type' do
+      resource[:name] = 'p_rabbitmq-server'
+      provider.stubs(:primitives).returns primitives_library_data
+      provider.retrieve_data
+      provider.complex_type = nil
+      provider.complex_metadata = nil
+      data = <<-eos
+<primitive class='ocf' id='p_rabbitmq-server' provider='mirantis' type='rabbitmq-server'>
+  <instance_attributes id='p_rabbitmq-server-instance_attributes'>
+    <nvpair id='p_rabbitmq-server-instance_attributes-node_port' name='node_port' value='5673'/>
+  </instance_attributes>
+  <meta_attributes id='p_rabbitmq-server-meta_attributes'>
+    <nvpair id='p_rabbitmq-server-meta_attributes-failure-timeout' name='failure-timeout' value='60s'/>
+    <nvpair id='p_rabbitmq-server-meta_attributes-migration-threshold' name='migration-threshold' value='INFINITY'/>
+  </meta_attributes>
+  <operations>
+    <op id='p_rabbitmq-server-demote-0' interval='0' name='demote' timeout='60'/>
+    <op id='p_rabbitmq-server-monitor-30' interval='30' name='monitor' timeout='60'/>
+    <op id='p_rabbitmq-server-monitor-Master-27' interval='27' name='monitor' role='Master' timeout='60'/>
+    <op id='p_rabbitmq-server-notify-0' interval='0' name='notify' timeout='60'/>
+    <op id='p_rabbitmq-server-promote-0' interval='0' name='promote' timeout='120'/>
+    <op id='p_rabbitmq-server-start-0' interval='0' name='start' timeout='120'/>
+    <op id='p_rabbitmq-server-stop-0' interval='0' name='stop' timeout='60'/>
+  </operations>
+</primitive>
+      eos
+      provider.stubs(:complex_change?).returns true
+      provider.expects(:cibadmin_delete).with "<master id='master_p_rabbitmq-server'/>", 'resources'
+      provider.expects(:cibadmin_create).with data, 'resources'
       provider.flush
     end
   end
 
   describe '#destroy' do
-    it 'should destroy resource with corresponding name' do
-      resource[:name] = 'my_resource'
-      provider.expects(:cibadmin_delete).with("<primitive id='my_resource'/>", 'resources')
+    it 'should destroy a complex resource with corresponding name' do
+      resource[:name] = 'p_rabbitmq-server'
+      provider.expects(:cibadmin_delete).with("<master id='master_p_rabbitmq-server'/>", 'resources')
+      provider.destroy
+    end
+
+    it 'should destroy a simple resource with corresponding name' do
+      resource[:name] = 'p_neutron-dhcp-agent'
+      provider.expects(:cibadmin_delete).with("<primitive id='p_neutron-dhcp-agent'/>", 'resources')
       provider.destroy
     end
   end

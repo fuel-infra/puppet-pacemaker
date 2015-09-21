@@ -53,22 +53,6 @@ describe Puppet::Type.type(:pcmk_order) do
       end
     end
 
-    it 'should require "first" value' do
-      expect { subject.new(
-          :name => 'mock_colocation',
-          :second => 'b',
-          :score => '100'
-      ) }.to raise_error /Option "first" is required/
-    end
-
-    it 'should require "second" value' do
-      expect { subject.new(
-          :name => 'mock_colocation',
-          :first => 'b',
-          :score => '100'
-      ) }.to raise_error /Option "second" is required/
-    end
-
     it 'should change inf to INFINITY in score' do
       expect(subject.new(
                  :name => 'mock_colocation',
