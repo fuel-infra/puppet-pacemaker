@@ -81,3 +81,4 @@ end
 # TODO: cleanup unused methods from pcmk_nodes provider
 # TODO: unit tests for location, colocation, order autorequire functions
 # TODO: change tests behaviour according to the options and test several possible options
+# TODO: noop provider is not working for non-ensurable types

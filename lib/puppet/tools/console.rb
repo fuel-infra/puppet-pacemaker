@@ -2,7 +2,7 @@ require 'rubygems'
 require 'puppet'
 require 'pry'
 
-base = File.expand_path File.join File.dirname(__FILE__), '..', 'provider', 'pacemaker'
+base = File.expand_path File.join File.dirname(__FILE__), '..', 'pacemaker'
 require File.join base, 'provider'
 
 # This console can be used to debug the pacemaker library

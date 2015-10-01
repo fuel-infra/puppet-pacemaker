@@ -106,6 +106,7 @@ module Pacemaker
       report += "\n"
       primitives_status_by_node.each do |primitive, data|
         primitive_name = primitive
+        next unless primitives.key? primitive
         primitive_name = primitives[primitive]['name'] if primitives[primitive]['name']
         primitive_type = 'Simple'
         primitive_type = 'Cloned' if primitive_is_clone? primitive

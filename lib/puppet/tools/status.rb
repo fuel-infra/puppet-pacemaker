@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'puppet'
 
-base = File.expand_path File.join File.dirname(__FILE__), '..', 'provider', 'pacemaker'
+base = File.expand_path File.join File.dirname(__FILE__), '..', 'pacemaker'
 require File.join base, 'provider'
 
 # This file is like 'pcs status'. You can use it to view
