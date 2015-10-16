@@ -79,7 +79,7 @@
 :cleanup_only_if_failures: true
 
 # use prefetch in the providers
-:prefetch: true
+:prefetch: false
 
 # meta attributes that are related to the primitive's service status
 # and should be excluded from the configuration
