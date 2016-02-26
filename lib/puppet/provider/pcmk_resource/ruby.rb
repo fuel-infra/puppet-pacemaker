@@ -348,7 +348,7 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
     fail "Could not create XML patch for '#{resource}'" unless primitive_element
     primitive_patch.add_element primitive_element
     if present?
-      cibadmin_modify xml_pretty_format(primitive_patch.root), 'resources'
+      cibadmin_replace xml_pretty_format(primitive_patch.root), 'resources'
     else
       cibadmin_create xml_pretty_format(primitive_patch.root), 'resources'
     end

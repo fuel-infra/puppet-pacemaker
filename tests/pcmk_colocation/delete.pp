@@ -5,6 +5,10 @@ Pcmk_resource {
   primitive_provider => 'pacemaker',
 }
 
+Pcmk_colocation {
+  ensure => 'absent',
+}
+
 pcmk_resource { 'test1' :
   parameters => {
     'fake' => '1',
@@ -17,8 +21,20 @@ pcmk_resource { 'test2' :
   },
 }
 
-pcmk_order { 'test2_after_test1' :
+pcmk_colocation { 'test2_with_and_after_test1' :
   first  => 'test1',
   second => 'test2',
   score  => '200',
+}
+
+pcmk_resource { 'test3' :
+  parameters => {
+    'fake' => '3',
+  },
+}
+
+pcmk_colocation { 'test3_with_and_after_test1' :
+  first  => 'test1',
+  second => 'test3',
+  score  => '400',
 }

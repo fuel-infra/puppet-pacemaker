@@ -164,7 +164,7 @@ Puppet::Type.type(:pcmk_colocation).provide(:ruby, :parent => Puppet::Provider::
     fail "Could not create XML patch for '#{resource}'" unless colocation_element
     colocation_patch.add_element colocation_element
     if present?
-      cibadmin_modify xml_pretty_format(colocation_patch.root), 'constraints'
+      cibadmin_replace xml_pretty_format(colocation_patch.root), 'constraints'
     else
       cibadmin_create xml_pretty_format(colocation_patch.root), 'constraints'
     end

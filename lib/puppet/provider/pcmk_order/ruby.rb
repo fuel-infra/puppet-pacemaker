@@ -152,7 +152,7 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
     fail "Could not create XML patch for '#{resource}'" unless order_element
     order_patch.add_element order_element
     if present?
-      cibadmin_modify xml_pretty_format(order_patch.root), 'constraints'
+      cibadmin_replace xml_pretty_format(order_patch.root), 'constraints'
     else
       cibadmin_create xml_pretty_format(order_patch.root), 'constraints'
     end

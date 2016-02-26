@@ -5,6 +5,10 @@ Pcmk_resource {
   primitive_provider => 'pacemaker',
 }
 
+Pcmk_location {
+  ensure => 'absent',
+}
+
 pcmk_resource { 'test1' :
   parameters => {
     'fake' => '1',

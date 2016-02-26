@@ -162,7 +162,7 @@ Puppet::Type.type(:pcmk_location).provide(:ruby, :parent => Puppet::Provider::Pa
     location_patch.add_element location_element
 
     if present?
-      cibadmin_modify xml_pretty_format(location_patch.root), 'constraints'
+      cibadmin_replace xml_pretty_format(location_patch.root), 'constraints'
     else
       cibadmin_create xml_pretty_format(location_patch.root), 'constraints'
     end

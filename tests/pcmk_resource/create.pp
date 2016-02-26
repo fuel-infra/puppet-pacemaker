@@ -5,19 +5,19 @@ Pcmk_resource {
   primitive_type     => 'Dummy',
 }
 
-pcmk_resource { 'test1' :
+pcmk_resource { 'test-simple1' :
   parameters => {
     'fake' => '1',
   },
 }
 
-pcmk_resource { 'test2' :
+pcmk_resource { 'test-simple2' :
   parameters => {
     'fake' => '2',
   },
 }
 
-pcmk_resource { 'test3' :
+pcmk_resource { 'test-simple-params1' :
   parameters => {
     'fake' => '3',
   },
@@ -39,7 +39,7 @@ pcmk_resource { 'test3' :
   }
 }
 
-pcmk_resource { 'test4' :
+pcmk_resource { 'test-simple-params2' :
   parameters => {
     'fake' => '4',
   },
@@ -69,12 +69,24 @@ pcmk_resource { 'test4' :
   ]
 }
 
-pcmk_resource { 'test5' :
+pcmk_resource { 'test-clone' :
   complex_type     => 'clone',
   complex_metadata => {
     'interleave' => 'true',
   },
   parameters       => {
     'fake' => '5',
+  },
+}
+
+pcmk_resource { 'test-master' :
+  primitive_type   => 'Stateful',
+  complex_type     => 'master',
+  complex_metadata => {
+    'interleave' => 'true',
+    'master-max' => '1',
+  },
+  parameters       => {
+    'fake' => '6',
   },
 }

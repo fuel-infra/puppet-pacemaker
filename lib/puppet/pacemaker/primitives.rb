@@ -200,10 +200,10 @@ module Pacemaker
     # return primitive complex type
     # or nil is the primitive is simple
     # @param primitive [String] primitive id
-    # @return [String] primitive complex type
+    # @return [Symbol] primitive complex type
     def primitive_complex_type(primitive)
       return unless primitive_is_complex? primitive
-      primitives[primitive]['complex']['type']
+      primitives[primitive]['complex']['type'].to_sym
     end
 
     # return the full name of the complex primitive

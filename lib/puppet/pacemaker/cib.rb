@@ -72,6 +72,18 @@ module Pacemaker
       end
     end
 
+    # replace the XML element
+    # @param xml [String, REXML::Element] XML element to replace
+    # @param scope [String] XML root scope
+    def cibadmin_replace(xml, scope)
+      xml = xml_pretty_format xml if xml.is_a? REXML::Element
+      retry_block do
+        options = %w(--force  --sync-call --replace)
+        options += ['--scope', scope.to_s] if scope
+        cibadmin_safe options, '--xml-text', xml.to_s
+      end
+    end
+
     # get the name of the DC (Designated Controller) node
     # used to determine if the cluster have elected one and is ready
     # @return [String, nil]
