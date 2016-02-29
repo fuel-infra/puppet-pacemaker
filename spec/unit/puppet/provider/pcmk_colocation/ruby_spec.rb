@@ -48,7 +48,7 @@ describe Puppet::Type.type(:pcmk_colocation).provider(:ruby) do
       xml = <<-eos
 <rsc_colocation id='my_colocation' rsc='bar' score='200' with-rsc='foo'/>
       eos
-      provider.expects(:cibadmin_modify).with xml, 'constraints'
+      provider.expects(:wait_for_constraint_update).with xml, resource[:name]
       provider.create
       provider.property_hash[:ensure] = :present
       provider.flush
@@ -62,7 +62,7 @@ describe Puppet::Type.type(:pcmk_colocation).provider(:ruby) do
       xml = <<-eos
 <rsc_colocation id='my_colocation' rsc='bar' score='INFINITY' with-rsc='foo'/>
       eos
-      provider.expects(:cibadmin_create).with xml, 'constraints'
+      provider.expects(:wait_for_constraint_create).with xml, resource[:name]
       provider.create
       provider.property_hash[:ensure] = :absent
       provider.flush
@@ -71,7 +71,8 @@ describe Puppet::Type.type(:pcmk_colocation).provider(:ruby) do
 
   describe '#destroy' do
     it 'should destroy colocation with corresponding name' do
-      provider.expects(:cibadmin_delete).with "<rsc_colocation id='my_colocation'/>", 'constraints'
+      xml = "<rsc_colocation id='my_colocation'/>\n"
+      provider.expects(:wait_for_constraint_remove).with xml, resource[:name]
       provider.destroy
       provider.flush
     end

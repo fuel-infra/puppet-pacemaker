@@ -4,7 +4,7 @@
 module Pacemaker
   module ConstraintColocations
 
-    # get colocation constraints and use mnemoisation on the list
+    # get colocation constraints and use mnemoization on the list
     # @return [Hash<String => Hash>]
     def constraint_colocations
       return @colocations_structure if @colocations_structure
@@ -22,16 +22,16 @@ module Pacemaker
     # @param colocation_structure [Hash<String => String>] the location data structure
     def constraint_colocation_add(colocation_structure)
       colocation_patch = xml_document
-      location_element = xml_rsc_colocation colocation_structure
-      fail "Could not create XML patch from colocation '#{colocation_structure.inspect}'!" unless location_element
-      colocation_patch.add_element location_element
-      cibadmin_create xml_pretty_format(colocation_patch.root), 'constraints'
+      colocation_element = xml_rsc_colocation colocation_structure
+      fail "Could not create XML patch from colocation '#{colocation_structure.inspect}'!" unless colocation_element
+      colocation_patch.add_element colocation_element
+      wait_for_constraint_create xml_pretty_format(colocation_patch.root), colocation_structure['id']
     end
 
     # remove a colocation constraint
     # @param id [String] the constraint id
     def constraint_colocation_remove(id)
-      cibadmin_delete "<rsc_colocation id='#{id}'/>", 'constraints'
+      wait_for_constraint_remove "<rsc_colocation id='#{id}'/>\n", id
     end
 
     # generate rsc_colocation elements from data structure

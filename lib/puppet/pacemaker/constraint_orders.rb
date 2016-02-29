@@ -4,7 +4,7 @@
 module Pacemaker
   module ConstraintOrders
 
-    # get order constraints and use mnemoisation on the list
+    # get order constraints and use mnemoization on the list
     # @return [Hash<String => Hash>]
     def constraint_orders
       return @orders_structure if @orders_structure
@@ -18,20 +18,20 @@ module Pacemaker
       constraint_orders.key? id
     end
 
+    # add a order constraint
+    # @param order_structure [Hash<String => String>] the location data structure
+    def constraint_order_add(order_structure)
+      order_patch = xml_document
+      order_element = xml_rsc_order order_structure
+      fail "Could not create XML patch from colocation '#{order_structure.inspect}'!" unless order_element
+      order_patch.add_element order_element
+      wait_for_constraint_create xml_pretty_format(order_patch.root), order_structure['id']
+    end
+
     # remove an order constraint
     # @param id [String] the constraint id
     def constraint_order_remove(id)
-      cibadmin_delete "<rsc_order id='#{id}'/>", 'constraints'
-    end
-
-    # add a order constraint
-    # @param colocation_structure [Hash<String => String>] the location data structure
-    def constraint_order_add(colocation_structure)
-      colocation_patch = xml_document
-      location_element = xml_rsc_colocation colocation_structure
-      fail "Could not create XML patch from colocation '#{colocation_structure.inspect}'!" unless location_element
-      colocation_patch.add_element location_element
-      cibadmin_create xml_pretty_format(colocation_patch.root), 'constraints'
+      wait_for_constraint_remove "<rsc_order id='#{id}'/>\n", id
     end
 
     # generate rsc_order elements from data structure

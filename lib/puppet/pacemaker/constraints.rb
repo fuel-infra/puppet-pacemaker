@@ -68,5 +68,12 @@ module Pacemaker
       constraints
     end
 
+    # check if a constraint exists
+    # @param id [String] the constraint id
+    # @return [TrueClass,FalseClass]
+    def constraint_exists?(id)
+      constraints.key? id
+    end
+
   end
 end

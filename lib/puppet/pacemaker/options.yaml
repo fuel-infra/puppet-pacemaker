@@ -81,6 +81,10 @@
 # use prefetch in the providers
 :prefetch: false
 
+# Use additional idempotency checks before cibadmin create and delete actions
+# It may be needed if many nodes are running at the same time
+:cibadmin_idempotency_checks: true
+
 # meta attributes that are related to the primitive's service status
 # and should be excluded from the configuration
 :status_meta_attributes:

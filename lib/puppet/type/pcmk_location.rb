@@ -79,9 +79,20 @@ module Puppet
 
     autorequire(:pcmk_resource) do
       resources = []
+      next resources unless self[:ensure] == :present
       resources << primitive_base_name(self[:primitive]) if self[:primitive]
       debug "Autorequire pcmk_resources: #{resources.join ', '}" if resources.any?
       resources
+    end
+
+    if respond_to? :autobefore
+      autobefore(:pcmk_resource) do
+        resources = []
+        next resources unless self[:ensure] == :absent
+        resources << primitive_base_name(self[:primitive]) if self[:primitive]
+        debug "Autobefore pcmk_resources: #{resources.join ', '}" if resources.any?
+        resources
+      end
     end
 
   end

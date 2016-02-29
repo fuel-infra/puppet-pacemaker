@@ -285,7 +285,7 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
   </primitive>
 </clone>
       eos
-      provider.expects(:cibadmin_create).with data, 'resources'
+      provider.expects(:wait_for_primitive_create).with data, resource[:name]
       provider.create
       provider.flush
     end
@@ -317,7 +317,7 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
 </primitive>
       eos
       provider.stubs(:complex_change?).returns false
-      provider.expects(:cibadmin_modify).with data, 'resources'
+      provider.expects(:wait_for_primitive_update).with data, resource[:name]
       provider.flush
     end
 
@@ -356,11 +356,11 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
 </master>
       eos
       provider.stubs(:complex_change?).returns false
-      provider.expects(:cibadmin_modify).with data, 'resources'
+      provider.expects(:wait_for_primitive_update).with data, resource[:name]
       provider.flush
     end
 
-    it 'should be able to chage from a complex to a simple resource type' do
+    it 'should be able to change from a complex to a simple resource type' do
       resource[:name] = 'p_rabbitmq-server'
       provider.stubs(:primitives).returns primitives_library_data
       provider.retrieve_data
@@ -387,22 +387,22 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
 </primitive>
       eos
       provider.stubs(:complex_change?).returns true
-      provider.expects(:cibadmin_delete).with "<master id='master_p_rabbitmq-server'/>", 'resources'
-      provider.expects(:cibadmin_create).with data, 'resources'
+      provider.expects(:wait_for_primitive_remove).with "<master id='master_p_rabbitmq-server'/>\n", resource[:name]
+      provider.expects(:wait_for_primitive_create).with data, resource[:name]
       provider.flush
     end
   end
 
   describe '#destroy' do
-    it 'should destroy a complex resource with corresponding name' do
+    it 'should destroy a complex resource with the corresponding name' do
       resource[:name] = 'p_rabbitmq-server'
-      provider.expects(:cibadmin_delete).with("<master id='master_p_rabbitmq-server'/>", 'resources')
+      provider.expects(:wait_for_primitive_remove).with("<master id='master_p_rabbitmq-server'/>\n", resource[:name])
       provider.destroy
     end
 
-    it 'should destroy a simple resource with corresponding name' do
+    it 'should destroy a simple resource with the corresponding name' do
       resource[:name] = 'p_neutron-dhcp-agent'
-      provider.expects(:cibadmin_delete).with("<primitive id='p_neutron-dhcp-agent'/>", 'resources')
+      provider.expects(:wait_for_primitive_remove).with("<primitive id='p_neutron-dhcp-agent'/>\n", resource[:name])
       provider.destroy
     end
   end

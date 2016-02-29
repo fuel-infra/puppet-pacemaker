@@ -39,49 +39,41 @@ module Pacemaker
     # add a new XML element to CIB
     # @param xml [String, REXML::Element] XML block to add
     # @param scope [String] XML root scope
-    def cibadmin_create(xml, scope)
+    def cibadmin_create(xml, scope=nil)
       xml = xml_pretty_format xml if xml.is_a? REXML::Element
-      retry_block do
-        options = %w(--force  --sync-call --create)
-        options += ['--scope', scope.to_s] if scope
-        cibadmin_safe options, '--xml-text', xml.to_s
-      end
+      options = %w(--force  --sync-call --create)
+      options += ['--scope', scope.to_s] if scope
+      cibadmin_safe options, '--xml-text', xml.to_s
     end
 
     # delete the XML element to CIB
     # @param xml [String, REXML::Element] XML block to delete
     # @param scope [String] XML root scope
-    def cibadmin_delete(xml, scope)
+    def cibadmin_delete(xml, scope=nil)
       xml = xml_pretty_format xml if xml.is_a? REXML::Element
-      retry_block do
-        options = %w(--force  --sync-call --delete)
-        options += ['--scope', scope.to_s] if scope
-        cibadmin_safe options, '--xml-text', xml.to_s
-      end
+      options = %w(--force  --sync-call --delete)
+      options += ['--scope', scope.to_s] if scope
+      cibadmin_safe options, '--xml-text', xml.to_s
     end
 
     # modify the XML element
     # @param xml [String, REXML::Element] XML element to modify
     # @param scope [String] XML root scope
-    def cibadmin_modify(xml, scope)
+    def cibadmin_modify(xml, scope=nil)
       xml = xml_pretty_format xml if xml.is_a? REXML::Element
-      retry_block do
-        options = %w(--force  --sync-call --modify)
-        options += ['--scope', scope.to_s] if scope
-        cibadmin_safe options, '--xml-text', xml.to_s
-      end
+      options = %w(--force  --sync-call --modify)
+      options += ['--scope', scope.to_s] if scope
+      cibadmin_safe options, '--xml-text', xml.to_s
     end
 
     # replace the XML element
     # @param xml [String, REXML::Element] XML element to replace
     # @param scope [String] XML root scope
-    def cibadmin_replace(xml, scope)
+    def cibadmin_replace(xml, scope=nil)
       xml = xml_pretty_format xml if xml.is_a? REXML::Element
-      retry_block do
-        options = %w(--force  --sync-call --replace)
-        options += ['--scope', scope.to_s] if scope
-        cibadmin_safe options, '--xml-text', xml.to_s
-      end
+      options = %w(--force  --sync-call --replace)
+      options += ['--scope', scope.to_s] if scope
+      cibadmin_safe options, '--xml-text', xml.to_s
     end
 
     # get the name of the DC (Designated Controller) node

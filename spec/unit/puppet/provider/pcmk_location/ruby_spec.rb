@@ -45,7 +45,7 @@ describe Puppet::Type.type(:pcmk_location).provider(:ruby) do
       xml = <<-eos
 <rsc_location id='my_location' node='my_node' rsc='my_primitive' score='200'/>
       eos
-      provider.expects(:cibadmin_create).with xml, 'constraints'
+      provider.expects(:wait_for_constraint_create).with xml, resource[:name]
       provider.create
       provider.flush
     end
@@ -78,7 +78,7 @@ describe Puppet::Type.type(:pcmk_location).provider(:ruby) do
 </rsc_location>
       eos
 
-      provider.expects(:cibadmin_create).with xml, 'constraints'
+      provider.expects(:wait_for_constraint_create).with xml, resource[:name]
       provider.create
       provider.flush
     end
@@ -117,7 +117,7 @@ describe Puppet::Type.type(:pcmk_location).provider(:ruby) do
   </rule>
 </rsc_location>
       eos
-      provider.expects(:cibadmin_create).with xml, 'constraints'
+      provider.expects(:wait_for_constraint_create).with xml, resource[:name]
       provider.create
       provider.flush
     end
@@ -129,7 +129,7 @@ describe Puppet::Type.type(:pcmk_location).provider(:ruby) do
         xml = <<-eos
 <rsc_location id='my_location' node='my_node' rsc='my_primitive' score='200'/>
         eos
-        provider.expects(:cibadmin_modify).with xml, 'constraints'
+        provider.expects(:wait_for_constraint_update).with xml, resource[:name]
         provider.create
         provider.property_hash[:ensure] = :present
         provider.flush
@@ -183,7 +183,8 @@ describe Puppet::Type.type(:pcmk_location).provider(:ruby) do
 
   context '#destroy' do
     it 'can remove a location' do
-      provider.expects(:cibadmin_delete).with "<rsc_location id='my_location'/>", 'constraints'
+      xml = "<rsc_location id='my_location'/>\n"
+      provider.expects(:wait_for_constraint_remove).with xml, resource[:name]
       provider.destroy
     end
   end

@@ -16,6 +16,7 @@ describe Puppet::Provider::Pacemaker do
   before(:each) do
     puppet_debug_override
     subject.stubs(:wait_for_online).returns(true)
+    subject.pacemaker_options[:retry_step] = 0
   end
 
   let :location_data do
@@ -365,6 +366,23 @@ describe Puppet::Provider::Pacemaker do
   end
 
   context '#constraints' do
+    it 'can generate a joined constraints structure' do
+      expect(subject.constraints).to be_a(Hash)
+      expect(subject.constraints['p_heat-engine-on-node-1']).to be_a(Hash)
+      expect(subject.constraints['p_heat-engine-on-node-1']['rsc']).to be_a String
+      expect(subject.constraints['p_heat-engine-on-node-1']).to be_a(Hash)
+      expect(subject.constraints['vip_management-with-haproxy']['with-rsc']).to be_a String
+      expect(subject.constraints['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']).to be_a(Hash)
+      expect(subject.constraints['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']['first']).to be_a String
+    end
+
+    it 'can check if a constraint of any types exists' do
+      expect(subject.constraint_exists? 'UNKNOWN').to eq(false)
+      expect(subject.constraint_exists? 'p_heat-engine-on-node-1').to eq(true)
+      expect(subject.constraint_exists? 'p_heat-engine-on-node-1').to eq(true)
+      expect(subject.constraint_exists? 'p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent').to eq(true)
+    end
+
     context '#location' do
       it 'can get the location structure from the CIB XML' do
         expect(subject.constraint_locations).to be_a(Hash)
@@ -374,21 +392,27 @@ describe Puppet::Provider::Pacemaker do
 
       let(:location_structure) {
         {
-            :id => 'test-on-node1',
-            :node => 'node1',
-            :rsc => 'test',
-            :score => '200',
+            'id' => 'test-on-node1',
+            'node' => 'node1',
+            'rsc' => 'test',
+            'score' => '100',
         }
       }
 
       let(:location_xml) {
         <<-eof
-<rsc_location id='test-on-node1' node='node1' rsc='test' score='200'/>
+<rsc_location id='test-on-node1' node='node1' rsc='test' score='100'/>
+        eof
+      }
+
+      let(:location_remove_xml) {
+        <<-eof
+<rsc_location id='test-on-node1'/>
         eof
       }
 
       it 'can add a location constraint' do
-        subject.expects(:cibadmin_create).with location_xml, 'constraints'
+        subject.expects(:wait_for_constraint_create).with location_xml, location_structure['id']
         subject.constraint_location_add location_structure
       end
 
@@ -398,13 +422,13 @@ describe Puppet::Provider::Pacemaker do
       end
 
       it 'can remove a location constraint' do
-        subject.expects(:cibadmin).returns(true)
+        subject.expects(:wait_for_constraint_remove).with location_remove_xml, location_structure['id']
         subject.constraint_location_remove 'test-on-node1'
       end
 
       it 'can add a service location constraint' do
-        subject.expects(:cibadmin_create).with location_xml, 'constraints'
-        subject.service_location_add 'test', 'node1', '200'
+        subject.expects(:wait_for_constraint_create).with location_xml, location_structure['id']
+        subject.service_location_add 'test', 'node1', '100'
       end
 
       it 'can check if a service location constraint exists' do
@@ -421,12 +445,19 @@ describe Puppet::Provider::Pacemaker do
             'id' => 'test1-with-test2',
             'rsc' => 'test1',
             'with-rsc' => 'test2',
+            'score' => '100',
         }
       }
 
       let(:colocation_xml) {
         <<-eof
-<rsc_colocation id='test1-with-test2' rsc='test1' with-rsc='test2'/>
+<rsc_colocation id='test1-with-test2' rsc='test1' score='100' with-rsc='test2'/>
+        eof
+      }
+
+      let(:colocation_remove_xml) {
+        <<-eof
+<rsc_colocation id='test1-with-test2'/>
         eof
       }
 
@@ -437,57 +468,148 @@ describe Puppet::Provider::Pacemaker do
       end
 
       it 'can add a colocation constraint' do
-        subject.expects(:cibadmin_create).with colocation_xml, 'constraints'
+        subject.expects(:wait_for_constraint_create).with colocation_xml, colocation_structure['id']
         subject.constraint_colocation_add colocation_structure
       end
 
       it 'can check if a colocation constraint exists' do
-        expect(subject.constraint_location_exists? 'p_heat-engine-on-node-1').to eq(true)
-        expect(subject.constraint_location_exists? 'UNKNOWN').to eq(false)
+        expect(subject.constraint_colocation_exists? 'vip_management-with-haproxy').to eq(true)
+        expect(subject.constraint_colocation_exists? 'UNKNOWN').to eq(false)
       end
 
       it 'can remove a colocation constraint' do
-        subject.expects(:cibadmin).returns(true)
-        subject.constraint_location_remove 'test-on-node1'
+        subject.expects(:wait_for_constraint_remove).with colocation_remove_xml, colocation_structure['id']
+        subject.constraint_colocation_remove 'test1-with-test2'
       end
     end
 
     context '#order' do
+      let(:order_structure) {
+        {
+            'id' => 'test1-after-test2',
+            'first' => 'test2',
+            'after' => 'test1',
+            'score' => '100',
+        }
+      }
+
+      let(:order_xml) {
+        <<-eof
+<rsc_order after='test1' first='test2' id='test1-after-test2' score='100'/>
+        eof
+      }
+
+      let(:order_remove_xml) {
+        <<-eof
+<rsc_order id='test1-after-test2'/>
+        eof
+      }
+
       it 'can get the order structure from the CIB XML' do
         expect(subject.constraint_orders).to be_a(Hash)
-        name = 'p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent'
-        expect(subject.constraint_orders[name]).to be_a(Hash)
-        expect(subject.constraint_orders[name]['first']).to be_a String
+        expect(subject.constraint_orders['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']).to be_a(Hash)
+        expect(subject.constraint_orders['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']['first']).to be_a String
+      end
+
+      it 'can add an order constraint' do
+        subject.expects(:wait_for_constraint_create).with order_xml, order_structure['id']
+        subject.constraint_order_add order_structure
+      end
+
+      it 'can check if an order constraint exists' do
+        expect(subject.constraint_order_exists? 'p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent').to eq(true)
+        expect(subject.constraint_order_exists? 'UNKNOWN').to eq(false)
+      end
+
+      it 'can remove an order constraint' do
+        subject.expects(:wait_for_constraint_remove).with order_remove_xml, order_structure['id']
+        subject.constraint_order_remove 'test1-after-test2'
       end
     end
   end
 
   context '#retry_functions' do
-    it 'retries block until it becomes true' do
-      subject.retry_block { true }
-    end
-
-    it 'waits for Pacemaker to become ready' do
-      subject.stubs(:is_online?).returns true
-      subject.wait_for_online
-    end
-
-    it 'waits for status to become known' do
+    before(:each) do
       subject.stubs(:cib_reset).returns true
-      subject.stubs(:primitive_status).returns 'stopped'
-      subject.wait_for_status 'myprimitive'
     end
 
-    it 'waits for the service to start' do
-      subject.stubs(:cib_reset).returns true
-      subject.stubs(:primitive_is_running?).with('myprimitive', nil).returns true
-      subject.wait_for_start 'myprimitive'
+    context '#generic' do
+      it 'retries block until it becomes true' do
+        subject.retry_block { true }
+      end
+
+      it 'waits for Pacemaker to become ready' do
+        subject.stubs(:is_online?).returns true
+        subject.wait_for_online
+      end
+
+      it 'waits for status to become known' do
+        subject.stubs(:primitive_status).returns 'stopped'
+        subject.wait_for_status 'myprimitive'
+      end
     end
 
-    it 'waits for the service to stop' do
-      subject.stubs(:cib_reset).returns true
-      subject.stubs(:primitive_is_running?).with('myprimitive', nil).returns false
-      subject.wait_for_stop 'myprimitive'
+    context '#service' do
+
+      it 'waits for the service to start' do
+        subject.stubs(:primitive_is_running?).with('myprimitive', nil).returns true
+        subject.wait_for_start 'myprimitive'
+      end
+
+      it 'waits for the service to stop' do
+        subject.stubs(:primitive_is_running?).with('myprimitive', nil).returns false
+        subject.wait_for_stop 'myprimitive'
+      end
+    end
+
+    context '#primitive' do
+      it 'waits for a primitive to be created' do
+        subject.stubs(:primitive_exists?).with('test').returns(true)
+        subject.expects(:cibadmin_create).never
+        subject.wait_for_primitive_create 'xml', 'test'
+        subject.stubs(:primitive_exists?).with('test').returns(false, true)
+        subject.expects(:cibadmin_create).with('xml', 'resources')
+        subject.wait_for_primitive_create 'xml', 'test'
+      end
+
+      it 'waits for a primitive to be updated' do
+        subject.expects(:cibadmin_replace).with('xml', 'resources').returns(false, true).twice
+        subject.wait_for_primitive_update 'xml', 'test'
+      end
+
+      it 'waits for a primitive to be removed' do
+        subject.stubs(:primitive_exists?).with('test').returns(false)
+        subject.expects(:cibadmin_delete).never
+        subject.wait_for_primitive_remove 'xml', 'test'
+        subject.stubs(:primitive_exists?).with('test').returns(true, false)
+        subject.expects(:cibadmin_delete).with('xml', 'resources')
+        subject.wait_for_primitive_remove 'xml', 'test'
+      end
+    end
+
+    context '#constraint' do
+      it 'waits for a constraint to be created' do
+        subject.stubs(:constraint_exists?).with('test').returns(true)
+        subject.expects(:cibadmin_create).never
+        subject.wait_for_constraint_create 'xml', 'test'
+        subject.stubs(:constraint_exists?).with('test').returns(false, true)
+        subject.expects(:cibadmin_create).with('xml', 'constraints')
+        subject.wait_for_constraint_create 'xml', 'test'
+      end
+
+      it 'waits for a constraint to be updated' do
+        subject.expects(:cibadmin_replace).with('xml', 'constraints').returns(false, true).twice
+        subject.wait_for_constraint_update 'xml', 'test'
+      end
+
+      it 'waits for a constraint to be removed' do
+        subject.stubs(:constraint_exists?).with('test').returns(false)
+        subject.expects(:cibadmin_delete).never
+        subject.wait_for_constraint_remove 'xml', 'test'
+        subject.stubs(:constraint_exists?).with('test').returns(true, false)
+        subject.expects(:cibadmin_delete).with('xml', 'constraints')
+        subject.wait_for_constraint_remove 'xml', 'test'
+      end
     end
   end
 

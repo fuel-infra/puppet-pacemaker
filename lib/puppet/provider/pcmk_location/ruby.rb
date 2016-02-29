@@ -162,9 +162,9 @@ Puppet::Type.type(:pcmk_location).provide(:ruby, :parent => Puppet::Provider::Pa
     location_patch.add_element location_element
 
     if present?
-      cibadmin_replace xml_pretty_format(location_patch.root), 'constraints'
+      wait_for_constraint_update xml_pretty_format(location_patch.root), location_structure['id']
     else
-      cibadmin_create xml_pretty_format(location_patch.root), 'constraints'
+      wait_for_constraint_create xml_pretty_format(location_patch.root), location_structure['id']
     end
     cluster_debug_report "#{resource} flush"
   end

@@ -90,3 +90,8 @@ pcmk_resource { 'test-master' :
     'fake' => '6',
   },
 }
+
+# Remove fixtures for constraints
+pcmk_resource { 'test1' :}
+pcmk_resource { 'test2' :}
+pcmk_resource { 'test3' :}

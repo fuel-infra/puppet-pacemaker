@@ -101,7 +101,7 @@ Puppet::Type.type(:pcmk_colocation).provide(:ruby, :parent => Puppet::Provider::
   end
 
   # Getters that obtains the first and second primitives and score in our
-  # ordering definintion that have been populated by prefetch or instances
+  # ordering definition that have been populated by prefetch or instances
   # (depends on if your using puppet resource or not).
   def first
     property_hash[:first]
@@ -163,10 +163,11 @@ Puppet::Type.type(:pcmk_colocation).provide(:ruby, :parent => Puppet::Provider::
     colocation_element = xml_rsc_colocation colocation_structure
     fail "Could not create XML patch for '#{resource}'" unless colocation_element
     colocation_patch.add_element colocation_element
+
     if present?
-      cibadmin_replace xml_pretty_format(colocation_patch.root), 'constraints'
+      wait_for_constraint_update xml_pretty_format(colocation_patch.root), colocation_structure['id']
     else
-      cibadmin_create xml_pretty_format(colocation_patch.root), 'constraints'
+      wait_for_constraint_create xml_pretty_format(colocation_patch.root), colocation_structure['id']
     end
     cluster_debug_report "#{resource} flush"
   end

@@ -82,3 +82,5 @@ end
 # TODO: unit tests for location, colocation, order autorequire functions
 # TODO: change tests behaviour according to the options and test several possible options
 # TODO: noop provider is not working for non-ensurable types
+# TODO: colocation/location/order will prevent its primitives from being removed. remove constraints first?
+# TODO: primitive should use similar functions to constraint_location_add/remove to reduce code duplication

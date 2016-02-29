@@ -49,7 +49,7 @@ describe Puppet::Type.type(:pcmk_order).provider(:ruby) do
       xml = <<-eos
 <rsc_order first='p_1' id='my_order' score='200' then='p_2'/>
       eos
-      provider.expects(:cibadmin_modify).with xml, 'constraints'
+      provider.expects(:wait_for_constraint_update).with xml, resource[:name]
       provider.create
       provider.property_hash[:ensure] = :present
       provider.flush
@@ -64,7 +64,7 @@ describe Puppet::Type.type(:pcmk_order).provider(:ruby) do
       xml = <<-eos
 <rsc_order first='p_1' id='my_order' score='INFINITY' then='p_2'/>
       eos
-      provider.expects(:cibadmin_create).with xml, 'constraints'
+      provider.expects(:wait_for_constraint_create).with xml, resource['name']
       provider.create
       provider.property_hash[:ensure] = :absent
       provider.flush
@@ -73,7 +73,8 @@ describe Puppet::Type.type(:pcmk_order).provider(:ruby) do
 
   describe '#destroy' do
     it 'should destroy order with corresponding name' do
-      provider.expects(:cibadmin_delete).with("<rsc_order id='my_order'/>", 'constraints')
+      xml = "<rsc_order id='my_order'/>\n"
+      provider.expects(:wait_for_constraint_remove).with xml, resource[:name]
       provider.destroy
       provider.flush
     end

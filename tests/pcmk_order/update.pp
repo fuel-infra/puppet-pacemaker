@@ -5,7 +5,7 @@ Pcmk_resource {
   primitive_provider => 'pacemaker',
 }
 
-Pcmk_ordern {
+Pcmk_order {
   ensure => 'present',
 }
 

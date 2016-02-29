@@ -44,7 +44,7 @@ module Pacemaker
       constraint_location_remove id
     end
 
-    # get location constraints and use mnemoisation on the list
+    # get location constraints and use mnemoization on the list
     # @return [Hash<String => Hash>]
     def constraint_locations
       return @locations_structure if @locations_structure
@@ -58,13 +58,13 @@ module Pacemaker
       location_element = xml_rsc_location location_structure
       fail "Could not create XML patch from location '#{location_structure.inspect}'!" unless location_element
       location_patch.add_element location_element
-      cibadmin_create xml_pretty_format(location_patch.root), 'constraints'
+      wait_for_constraint_create xml_pretty_format(location_patch.root), location_structure['id']
     end
 
     # remove a location constraint
     # @param id [String] the constraint id
     def constraint_location_remove(id)
-      cibadmin_delete "<rsc_location id='#{id}'/>", 'constraints'
+      wait_for_constraint_remove "<rsc_location id='#{id}'/>\n", id
     end
 
     # check if locations constraint exists

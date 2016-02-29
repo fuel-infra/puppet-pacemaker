@@ -173,7 +173,7 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
     return unless primitive_exists? resource[:name]
     primitive_tag = 'primitive'
     primitive_tag = primitive_complex_type resource[:name] if primitive_is_complex? resource[:name]
-    cibadmin_delete "<#{primitive_tag} id='#{primitive_full_name resource[:name]}'/>", 'resources'
+    wait_for_primitive_remove "<#{primitive_tag} id='#{primitive_full_name resource[:name]}'/>\n", resource[:name]
   end
 
   # Unlike create we actually immediately delete the item.  Corosync forces us
@@ -282,6 +282,7 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
     end
 
     if complex_change?
+      debug 'Changing the complex type of the primitive. First remove and then create it!'
       remove_primitive
       property_hash[:ensure] = :absent
     end
@@ -348,9 +349,9 @@ Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pa
     fail "Could not create XML patch for '#{resource}'" unless primitive_element
     primitive_patch.add_element primitive_element
     if present?
-      cibadmin_replace xml_pretty_format(primitive_patch.root), 'resources'
+      wait_for_primitive_update xml_pretty_format(primitive_patch.root), primitive_structure['id']
     else
-      cibadmin_create xml_pretty_format(primitive_patch.root), 'resources'
+      wait_for_primitive_create xml_pretty_format(primitive_patch.root), primitive_structure['id']
     end
     cluster_debug_report "#{resource} flush"
   end
