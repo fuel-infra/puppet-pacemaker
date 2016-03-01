@@ -1,7 +1,6 @@
-# functions related to the primitive and node status
-# main structure "node_status"
-
 module Pacemaker
+  # functions related to the primitive and node status
+  # main structure "node_status"
   module Status
     # get lrm_rsc_ops section from lrm_resource section CIB section
     # @param lrm_resource [REXML::Element]

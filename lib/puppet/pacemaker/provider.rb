@@ -1,6 +1,3 @@
-# the parent provider for all other pacemaker providers
-# includes all functions from all submodules
-
 require 'rexml/document'
 require 'rexml/formatters/pretty'
 require 'timeout'
@@ -26,6 +23,8 @@ require File.join base, 'wait'
 require File.join base, 'xml'
 require File.join base, 'type'
 
+# the parent provider for all other pacemaker providers
+# includes all functions from all submodules
 class Puppet::Provider::Pacemaker < Puppet::Provider
 
   # include instance methods from the pacemaker library files

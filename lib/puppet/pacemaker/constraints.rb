@@ -1,9 +1,8 @@
-# functions related to constraints (order, location, colocation)
-# main structure "constraints"
-# this structure is used by other specific location colocation and order
-# submodules to form their data structures
-
 module Pacemaker
+  # functions related to constraints (order, location, colocation)
+  # main structure "constraints"
+  # this structure is used by other specific location colocation and order
+  # submodules to form their data structures
   module Constraints
     # get all 'rsc_location', 'rsc_order' and 'rsc_colocation' sections from CIB
     # @return [Array<REXML::Element>] at /cib/configuration/constraints/*

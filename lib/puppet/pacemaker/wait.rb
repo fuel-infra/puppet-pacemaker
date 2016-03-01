@@ -1,7 +1,6 @@
-# functions that can wait for something repeatedly
-# polling the system status until the condition is met
-
 module Pacemaker
+  # functions that can wait for something repeatedly
+  # polling the system status until the condition is met
   module Wait
     # retry the given command until it runs without errors
     # or for RETRY_COUNT times with RETRY_STEP sec step
@@ -29,7 +28,7 @@ module Pacemaker
     # wait for pacemaker to become online
     # @param comment [String] log tag comment to trace calls
     def wait_for_online(comment=nil)
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for Pacemaker to become online"
+      message = "Waiting #{max_wait_time} seconds for Pacemaker to become online"
       message += " (#{comment})" if comment
       debug message
       retry_block { is_online? }
@@ -40,7 +39,7 @@ module Pacemaker
     # @param primitive [String] primitive name
     # @param node [String] on this node if given
     def wait_for_status(primitive, node = nil)
-      message = "Wait for a known status of '#{primitive}'"
+      message = "Waiting #{max_wait_time} seconds for a known status of '#{primitive}'"
       message += " on node '#{node}'" if node
       debug message
       retry_block do
@@ -57,7 +56,7 @@ module Pacemaker
     # @param primitive [String] primitive id
     # @param node [String] on this node if given
     def wait_for_start(primitive, node = nil)
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the service '#{primitive}' to start"
+      message = "Waiting #{max_wait_time} seconds for the service '#{primitive}' to start"
       message += " on node '#{node}'" if node
       debug message
       retry_block do
@@ -74,7 +73,7 @@ module Pacemaker
     # @param primitive [String] primitive id
     # @param node [String] on this node if given
     def wait_for_master(primitive, node = nil)
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the service '#{primitive}' to start master"
+      message = "Waiting #{max_wait_time} seconds for the service '#{primitive}' to start master"
       message += " on node '#{node}'" if node
       debug message
       retry_block do
@@ -91,7 +90,7 @@ module Pacemaker
     # @param primitive [String] primitive id
     # @param node [String] on this node if given
     def wait_for_stop(primitive, node = nil)
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the service '#{primitive}' to stop"
+      message = "Waiting #{max_wait_time} seconds for the service '#{primitive}' to stop"
       message += " on node '#{node}'" if node
       debug message
       retry_block do
@@ -110,7 +109,7 @@ module Pacemaker
     # @param primitive [String] the id of the new primitive
     # @param scope [String] XML root scope
     def wait_for_primitive_create(xml, primitive, scope = 'resources')
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the primitive '#{primitive}' to be created"
+      message = "Waiting #{max_wait_time} seconds for the primitive '#{primitive}' to be created"
       debug message
       retry_block do
         if pacemaker_options[:cibadmin_idempotency_checks]
@@ -129,7 +128,7 @@ module Pacemaker
     # @param primitive [String] the id of the removed primitive
     # @param scope [String] XML root scope
     def wait_for_primitive_remove(xml, primitive, scope = 'resources')
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the primitive '#{primitive}' to be removed"
+      message = "Waiting #{max_wait_time} seconds for the primitive '#{primitive}' to be removed"
       debug message
       retry_block do
         if pacemaker_options[:cibadmin_idempotency_checks]
@@ -148,7 +147,7 @@ module Pacemaker
     # @param primitive [String] the id of the updated primitive
     # @param scope [String] XML root scope
     def wait_for_primitive_update(xml, primitive, scope = 'resources')
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the primitive '#{primitive}' to be updated"
+      message = "Waiting #{max_wait_time} seconds for the primitive '#{primitive}' to be updated"
       debug message
       retry_block do
         # replace action is already idempotent
@@ -164,7 +163,7 @@ module Pacemaker
     # @param constraint [String] the id of the new constraint
     # @param scope [String] XML root scope
     def wait_for_constraint_create(xml, constraint, scope = 'constraints')
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the constraint '#{constraint}' to be created"
+      message = "Waiting #{max_wait_time} seconds for the constraint '#{constraint}' to be created"
       debug message
       retry_block do
         if pacemaker_options[:cibadmin_idempotency_checks]
@@ -183,7 +182,7 @@ module Pacemaker
     # @param constraint [String] the id of the removed constraint
     # @param scope [String] XML root scope
     def wait_for_constraint_remove(xml, constraint, scope = 'constraints')
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the constraint '#{constraint}' to be removed"
+      message = "Waiting #{max_wait_time} seconds for the constraint '#{constraint}' to be removed"
       debug message
       retry_block do
         if pacemaker_options[:cibadmin_idempotency_checks]
@@ -202,7 +201,7 @@ module Pacemaker
     # @param constraint [String] the id of the updated constraint
     # @param scope [String] XML root scope
     def wait_for_constraint_update(xml, constraint, scope = 'constraints')
-      message = "Waiting #{pacemaker_options[:retry_count] * pacemaker_options[:retry_step]} seconds for the constraint '#{constraint}' to be updated"
+      message = "Waiting #{max_wait_time} seconds for the constraint '#{constraint}' to be updated"
       debug message
       retry_block do
         # replace action is already idempotent

@@ -1,6 +1,9 @@
-# this submodule contains functions for low-level actions with CIB data
-
+# the Pacemaker module contains many submodules separated
+# by the preformed functions. They are later merged
+# together in the 'provided' file
 module Pacemaker
+  # this submodule contains the basic functions
+  # for low-level actions with CIB data
   module Cib
     # get the raw CIB from Pacemaker
     # @return [String] cib xml data

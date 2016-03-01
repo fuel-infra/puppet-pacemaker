@@ -1,9 +1,7 @@
-# functions related to constraint_orders constraints
-# main structure "constraint_orders"
-
 module Pacemaker
+  # functions related to constraint_orders constraints
+  # main structure "constraint_orders"
   module ConstraintOrders
-
     # get order constraints and use mnemoization on the list
     # @return [Hash<String => Hash>]
     def constraint_orders

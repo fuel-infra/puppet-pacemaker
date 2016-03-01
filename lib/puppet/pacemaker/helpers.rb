@@ -1,6 +1,5 @@
-# misc helper methods used in other submodules
-
 module Pacemaker
+  # misc helper methods used in other submodules
   module Helpers
     # convert elements's attributes to hash
     # @param element [REXML::Element]

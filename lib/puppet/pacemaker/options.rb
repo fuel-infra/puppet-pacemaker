@@ -1,10 +1,8 @@
-# pacemaker options submodules
-# takes the options structure from the YAML file
-# other options sources can be implemented here
-
 module Pacemaker
+  # pacemaker options submodule
+  # takes the options structure from the YAML file
+  # other options sources can be implemented here
   module Options
-
     # the YAML file with pacemaker options
     # @return [String]
     def self.pacemaker_options_file
@@ -22,6 +20,12 @@ module Pacemaker
     # @return [Hash]
     def pacemaker_options
       Pacemaker::Options.pacemaker_options
+    end
+
+    # maximum possible waiting time of retry functions
+    # @return [Integer]
+    def max_wait_time
+      pacemaker_options[:retry_count] * pacemaker_options[:retry_step]
     end
 
   end

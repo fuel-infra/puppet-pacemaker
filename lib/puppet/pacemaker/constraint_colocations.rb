@@ -1,9 +1,7 @@
-# functions related to colocations constraints
-# main structure "constraint_colocations"
-
 module Pacemaker
+  # functions related to colocations constraints
+  # main structure "constraint_colocations"
   module ConstraintColocations
-
     # get colocation constraints and use mnemoization on the list
     # @return [Hash<String => Hash>]
     def constraint_colocations

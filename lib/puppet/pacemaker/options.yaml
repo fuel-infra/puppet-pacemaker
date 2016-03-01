@@ -45,7 +45,7 @@
 # :local  - The service is running on the local node
 :status_mode_multistate: :local
 :status_mode_clone: :local
-:status_mode_simple: :local
+:status_mode_simple: :global
 
 # try to stop and disable the basic init/upstart service
 # because it will mess with OCF-based Pacemaker primitive

@@ -1,7 +1,6 @@
-# functions related to the cluster properties
-# main structure "cluster_properties"
-
 module Pacemaker
+  # functions related to the cluster properties
+  # main structure "cluster_properties"
   module Properties
     # get cluster property CIB section
     # @return [REXML::Element]

@@ -1,9 +1,7 @@
-# functions related to locations constraints
-# main structure "constraint_locations"
-
 module Pacemaker
+  # functions related to locations constraints
+  # main structure "constraint_locations"
   module ConstraintLocations
-
     # construct the constraint unique name
     # from primitive's and node's names
     # @param primitive [String]

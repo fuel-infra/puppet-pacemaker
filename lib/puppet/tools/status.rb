@@ -12,6 +12,7 @@ require File.join base, 'provider'
 # id you want to debug the code without Pacemaker running.
 
 class Puppet::Provider::Pacemaker
+  # override debug method
   def debug(msg)
     puts msg
   end

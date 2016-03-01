@@ -103,7 +103,23 @@ describe Puppet::Type.type(:service).provider(:pacemaker) do
       provider.status
     end
 
-    it 'gets service status locally' do
+    it 'gets service status globally for a simple service' do
+      provider.expects(:get_primitive_puppet_status).with name
+      provider.status
+    end
+
+    it 'gets service status locally for a clone service' do
+      provider.stubs(:primitive_is_complex?).returns(true)
+      provider.stubs(:primitive_is_multistate?).returns(false)
+      provider.stubs(:primitive_is_clone?).returns(true)
+      provider.expects(:get_primitive_puppet_status).with name, hostname
+      provider.status
+    end
+
+    it 'gets service status locally for a multistate service' do
+      provider.stubs(:primitive_is_complex?).returns(true)
+      provider.stubs(:primitive_is_multistate?).returns(true)
+      provider.stubs(:primitive_is_clone?).returns(false)
       provider.expects(:get_primitive_puppet_status).with name, hostname
       provider.status
     end

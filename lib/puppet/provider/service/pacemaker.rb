@@ -32,7 +32,7 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
       @name = primitive_name
       return @name
     end
-    primitive_name = title.gsub /(ms-)|(clone-)/, ''
+    primitive_name = title.gsub(/(ms-)|(clone-)/, '')
     if primitive_exists? primitive_name
       debug "Using simple name '#{primitive_name}' instead of '#{title}'"
       @name = primitive_name
@@ -61,7 +61,7 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
   def basic_service_name
     return @basic_service_name if @basic_service_name
     if name.start_with? 'p_'
-      basic_service_name = name.gsub /^p_/, ''
+      basic_service_name = name.gsub(/^p_/, '')
       debug "Using '#{basic_service_name}' as the basic service name for primitive '#{name}'"
       @basic_service_name = basic_service_name
     else

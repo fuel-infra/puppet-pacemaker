@@ -1,9 +1,8 @@
-# contains functions that cn be included to the pacemaker types
-
 base = File.expand_path File.dirname(__FILE__)
 require File.join base, 'options'
 
 module Pacemaker
+  # contains functions that cn be included to the pacemaker types
   module Type
     include ::Pacemaker::Options
 
@@ -178,7 +177,7 @@ module Pacemaker
     # @return [String]
     def primitive_base_name(primitive)
       primitive = primitive.split(':').first
-      primitive.gsub /^clone_|^master_/, ''
+      primitive.gsub(/^clone_|^master_/, '')
     end
 
   end

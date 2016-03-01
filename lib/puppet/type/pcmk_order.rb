@@ -1,6 +1,7 @@
 require 'puppet/parameter/boolean'
 require File.join File.dirname(__FILE__), '../pacemaker/type'
 
+# basic Puppet module
 module Puppet
   newtype(:pcmk_order) do
     desc %q(Type for manipulating Corosync/Pacemkaer ordering entries.  Order

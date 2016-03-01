@@ -1,10 +1,8 @@
-# debug related functions
-# "cluster_debug_report" the main debug text generation function
-# "safe_methods" are used to debug providers without making any actual changes to the system
-
 module Pacemaker
+  # debug related functions
+  # "cluster_debug_report" the main debug text generation function
+  # "safe_methods" are used to debug providers without making any actual changes to the system
   module Debug
-
     # check if debug is enabled either in the pacemaker options
     # or the resource has the 'debug' parameter and it's enabled
     # @return [TrueClass,FalseClass]
@@ -21,7 +19,7 @@ module Pacemaker
     # If a command have failed, show command and the arguments and the raise the exception.
     # The actual commands methods should be created by the provider's "commands" helper.
     # @param cmd [Symbol, String] command name
-    # @param *args [Array] command arguments
+    # @param args [Array] command arguments
     # @return [String,NilClass]
     def safe_method(cmd, *args)
       cmd = cmd.to_sym unless cmd.is_a? Symbol

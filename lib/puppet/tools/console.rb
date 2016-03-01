@@ -26,7 +26,8 @@ class Puppet::Provider::Pacemaker
   end
 end
 
-class Puppet::Provider::Pacemaker_common
+class Puppet::Provider::Pacemaker
+  # override the debug method
   def debug(msg)
     puts msg
   end

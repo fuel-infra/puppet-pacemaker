@@ -1,7 +1,6 @@
-# functions related to the cluster nodes
-# main structure "nodes" with node's names and ids
-
 module Pacemaker
+  # functions related to the cluster nodes
+  # main structure "nodes" with node's names and ids
   module Nodes
     # get nodes CIB section
     # @return [REXML::Element] at /cib/configuration/nodes

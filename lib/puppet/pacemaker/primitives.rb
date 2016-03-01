@@ -1,7 +1,6 @@
-# function related to the primitives configuration
-# main structure "primitives"
-
 module Pacemaker
+  # function related to the primitives configuration
+  # main structure "primitives"
   module Primitives
     # get all 'primitive' sections from CIB
     # @return [Array<REXML::Element>] at /cib/configuration/resources/primitive
@@ -258,6 +257,11 @@ module Pacemaker
       target_role == 'Started'
     end
 
+    # generate a new XML element object
+    # and fill it with the primitive data from
+    # the provided primitive structure
+    # @param data [Hash] primitive_structure
+    # @return [REXML::Element]
     def xml_primitive(data)
       return unless data and data.is_a? Hash
       primitive_skip_attributes = %w(name parent instance_attributes operations meta_attributes utilization)

@@ -1,6 +1,5 @@
-# functions that are used to generate XML documents and create XML patches
-
 module Pacemaker
+  # functions that are used to generate XML documents and create XML patches
   module Xml
     # create a new xml document
     # @param path [String,Array<String>] create this sequence of path elements
@@ -51,10 +50,11 @@ module Pacemaker
   end
 end
 
-# make REXML's attributes to be sorted by their name
-# when iterating through them instead of randomly placing them each time
-# it's required to generate stable XML texts for unit testing
+# external REXML module patching
 module REXML
+  # make REXML's attributes to be sorted by their name
+  # when iterating through them instead of randomly placing them each time
+  # it's required to generate stable XML texts for unit testing
   class Attributes
     def each_value # :yields: attribute
       keys.sort.each do |key|
