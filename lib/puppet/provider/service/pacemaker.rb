@@ -13,7 +13,7 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
   # original name passed from the type
   # @return [String]
   def title
-    @resource[:name]
+    @resource.title
   end
 
   # primitive name with 'p_' added if needed
@@ -57,8 +57,10 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
 
   # name of the basic service without 'p_' prefix
   # used to disable the basic service
+  # uses unmodified "name" property if provided
   # @return [String]
   def basic_service_name
+    return @resource[:name] unless @resource.title == @resource[:name]
     return @basic_service_name if @basic_service_name
     if name.start_with? 'p_'
       basic_service_name = name.gsub(/^p_/, '')
