@@ -107,6 +107,8 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
       end
     end
 
+    disable_basic_service if pacemaker_options[:disable_basic_service]
+
     debug "Return: '#{out}' (#{out.class})"
     debug cluster_debug_report "#{@resource} status"
     out
@@ -116,7 +118,6 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
   def start
     debug "Call 'start' for Pacemaker service '#{name}' on node '#{hostname}'"
     enable unless primitive_is_managed? name
-    disable_basic_service if pacemaker_options[:disable_basic_service]
 
     if pacemaker_options[:cleanup_on_start]
       if not pacemaker_options[:cleanup_only_if_failures] or primitive_has_failures? name, hostname
@@ -127,6 +128,8 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
     if pacemaker_options[:add_location_constraint]
       service_location_add full_name, hostname unless service_location_exists? full_name, hostname
     end
+
+    disable_basic_service if pacemaker_options[:disable_basic_service]
 
     unban_primitive name, hostname
     start_primitive name
@@ -151,6 +154,8 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
         cleanup
       end
     end
+
+    disable_basic_service if pacemaker_options[:disable_basic_service]
 
     if primitive_is_multistate? name
       service_stop_mode pacemaker_options[:stop_mode_multistate]
