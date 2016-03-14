@@ -67,6 +67,22 @@ describe Puppet::Type.type(:service).provider(:pacemaker) do
       expect(provider.name).to eq(title)
     end
 
+    it 'can generate a list of service name variations' do
+      variations = provider.service_name_variations 'test'
+      expect(variations).to eq %w(test p_test)
+      variations = provider.service_name_variations 'p_test'
+      expect(variations).to eq %w(p_test test)
+      variations = provider.service_name_variations 'clone-test'
+      expect(variations).to eq %w(clone-test p_clone-test test p_test)
+    end
+
+    it 'can find an existing primitive name in the list' do
+      provider.expects(:primitive_exists?).with('a').returns(false)
+      provider.expects(:primitive_exists?).with('b').returns(true)
+      provider.expects(:primitive_exists?).with('c').never
+      expect(provider.pick_existing_name %w(a b c)).to eq 'b'
+    end
+
     it 'uses "p_" prefix with name if found name with prefix' do
       provider.unstub(:name)
       provider.stubs(:primitive_exists?).with(title).returns(false)
@@ -75,16 +91,34 @@ describe Puppet::Type.type(:service).provider(:pacemaker) do
     end
 
     it 'uses name without "p_" to disable basic service' do
-      provider.stubs(:name).returns(name)
+      provider.unstub(:basic_service_name)
       expect(provider.basic_service_name).to eq(title)
+    end
+
+    it 'uses "name" as the basic service name if "name" is provided' do
+      provider.unstub(:basic_service_name)
+      provider.stubs(:service_title).returns('wrong_title')
+      provider.stubs(:service_name).returns('system_name')
+      expect(provider.basic_service_name).to eq('system_name')
     end
 
     it 'can work with complex name instead of simple' do
       provider.unstub(:name)
-      provider.stubs(:title).returns(full_name)
+      provider.stubs(:service_title).returns(full_name)
+      provider.stubs(:service_name).returns(name)
       provider.stubs(:primitive_exists?).with('p_' + full_name).returns(false)
       provider.stubs(:primitive_exists?).with(full_name).returns(false)
       provider.stubs(:primitive_exists?).with(name).returns(true)
+      expect(provider.name).to eq(name)
+    end
+
+    it 'can find a service by provided name if the title is wrong' do
+      provider.unstub(:name)
+      provider.stubs(:service_title).returns('wrong_title')
+      provider.stubs(:service_name).returns(name)
+      provider.stubs(:primitive_exists?).with(name).returns(true)
+      provider.stubs(:primitive_exists?).with('wrong_title').returns(false)
+      provider.stubs(:primitive_exists?).with('p_wrong_title').returns(false)
       expect(provider.name).to eq(name)
     end
   end

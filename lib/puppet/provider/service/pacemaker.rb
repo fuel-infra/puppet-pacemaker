@@ -10,41 +10,77 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
   commands :crm_attribute => 'crm_attribute'
   commands :cibadmin => 'cibadmin'
 
-  # original name passed from the type
+  # original title of the service
   # @return [String]
-  def title
+  def service_title
     @resource.title
   end
 
-  # primitive name with 'p_' added if needed
+  # original name of the service
+  # in most cases will be equal to the title
+  # but can be different
+  # @return [String]
+  def service_name
+    resource[:name]
+  end
+
+  # check if the service name is the same as service title
+  # @return [true,false]
+  def name_equals_title?
+    service_title == service_name
+  end
+
+  # find a primitive name that is present in the CIB
+  # or nil if none is present
+  # @return [String,nil]
+  def pick_existing_name(*names)
+    names.flatten.find do |name|
+      primitive_exists? name
+    end
+  end
+
+  # generate a list of strings the service name could be written as
+  # perhaps, one of them could be found in the CIB
+  # @param name [String]
+  # @return [Array<String>]
+  def service_name_variations(name)
+    name = name.to_s
+    variations = []
+    variations << name
+    if name.start_with? 'p_'
+      variations << name.gsub(/^p_/, '')
+    else
+      variations << "p_#{name}"
+    end
+
+    simple_name =  name.gsub(/^(ms-)|(clone-)/, '')
+    unless simple_name == name
+      variations << simple_name
+      if simple_name.start_with? 'p_'
+        variations << simple_name.gsub(/^p_/, '')
+      else
+        variations << "p_#{simple_name}"
+      end
+    end
+    variations
+  end
+
+  # get the correct name of the service primitive
   # @return [String]
   def name
     return @name if @name
-    primitive_name = title
-    if primitive_exists? primitive_name
-      debug "Primitive with title '#{primitive_name}' was found in CIB"
-      @name = primitive_name
-      return @name
+    @name = pick_existing_name service_name_variations(service_title), service_name_variations(service_name)
+    if @name
+      message = "Using CIB name '#{@name}' for primitive '#{service_title}'"
+      message += " with name '#{service_name}'" unless name_equals_title?
+      debug message
+    else
+      message = "Primitive '#{service_title}'"
+      message += " with name '#{service_name}'" unless name_equals_title?
+      message += ' was not found in CIB!'
+      fail message
     end
-    primitive_name = resource[:name]
-    if primitive_exists? primitive_name
-      debug "Primitive with name '#{primitive_name}' was found in CIB"
-      @name = primitive_name
-      return @name
-    end
-    primitive_name = "p_#{title}"
-    if primitive_exists? primitive_name
-      debug "Using '#{primitive_name}' name instead of '#{title}'"
-      @name = primitive_name
-      return @name
-    end
-    primitive_name = title.gsub(/(ms-)|(clone-)/, '')
-    if primitive_exists? primitive_name
-      debug "Using simple name '#{primitive_name}' instead of '#{title}'"
-      @name = primitive_name
-      return @name
-    end
-    fail "Primitive '#{title}' was not found in CIB!"
+    @name
   end
 
   # full name of the primitive
@@ -62,11 +98,12 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
   end
 
   # name of the basic service without 'p_' prefix
-  # used to disable the basic service
-  # uses unmodified "name" property if provided
+  # used to disable the basic service.
+  # Uses unmodified "name" property if it's not the same as title
+  # because most likely it will be the real system service name
   # @return [String]
   def basic_service_name
-    return @resource[:name] unless @resource.title == @resource[:name]
+    return service_name unless name_equals_title?
     return @basic_service_name if @basic_service_name
     if name.start_with? 'p_'
       basic_service_name = name.gsub(/^p_/, '')
