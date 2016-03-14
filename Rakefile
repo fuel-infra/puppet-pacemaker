@@ -19,3 +19,5 @@ task :doc => :yard do
   system "open #{index_file}" if RUBY_PLATFORM.include? 'darwin'
   system "xdg-open #{index_file}" if RUBY_PLATFORM.include? 'linux'
 end
+
+task :syntax => :lint
