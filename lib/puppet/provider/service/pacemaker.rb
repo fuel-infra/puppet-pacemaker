@@ -26,6 +26,12 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pac
       @name = primitive_name
       return @name
     end
+    primitive_name = resource[:name]
+    if primitive_exists? primitive_name
+      debug "Primitive with name '#{primitive_name}' was found in CIB"
+      @name = primitive_name
+      return @name
+    end
     primitive_name = "p_#{title}"
     if primitive_exists? primitive_name
       debug "Using '#{primitive_name}' name instead of '#{title}'"
