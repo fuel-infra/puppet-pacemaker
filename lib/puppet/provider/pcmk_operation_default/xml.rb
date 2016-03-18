@@ -1,6 +1,6 @@
-require File.join File.dirname(__FILE__), '../../pacemaker/provider'
+require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_operation_default).provide(:ruby, :parent => Puppet::Provider::Pacemaker) do
+Puppet::Type.type(:pcmk_operation_default).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
   desc 'Specific operation_default for a rather specific type since I currently have no plan to
         abstract corosync/pacemaker vs. keepalived. This op_defaults will check the state
         of Corosync cluster configuration properties.'

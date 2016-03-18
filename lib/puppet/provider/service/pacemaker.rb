@@ -1,6 +1,6 @@
-require File.join File.dirname(__FILE__), '../../pacemaker/provider'
+require_relative '../pcmk_xml'
 
-Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pacemaker) do
+Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::PcmkXML) do
 
   has_feature :enableable
   has_feature :refreshable

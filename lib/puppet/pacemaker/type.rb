@@ -1,11 +1,6 @@
-base = File.expand_path File.dirname(__FILE__)
-require File.join base, 'options'
-
 module Pacemaker
   # contains functions that cn be included to the pacemaker types
   module Type
-    include ::Pacemaker::Options
-
     # output IS and SHOULD values for debugging
     # @param is [Object] the current value of the parameter
     # @param should [Object] the catalog value of the parameter

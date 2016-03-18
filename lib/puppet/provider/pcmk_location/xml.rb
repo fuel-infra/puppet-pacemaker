@@ -1,6 +1,6 @@
-require File.join File.dirname(__FILE__), '../../pacemaker/provider'
+require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_location).provide(:ruby, :parent => Puppet::Provider::Pacemaker) do
+Puppet::Type.type(:pcmk_location).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
   desc %q(Specific provider for a rather specific type since I currently have no plan to
         abstract corosync/pacemaker vs. keepalived.  This provider will check the state
         of current primitive colocations on the system; add, delete, or adjust various

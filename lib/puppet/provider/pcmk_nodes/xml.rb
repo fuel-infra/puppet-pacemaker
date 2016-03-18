@@ -1,6 +1,6 @@
-require File.join File.dirname(__FILE__), '../../pacemaker/provider'
+require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_nodes).provide(:ruby, :parent => Puppet::Provider::Pacemaker) do
+Puppet::Type.type(:pcmk_nodes).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
 
   commands 'cmapctl'  => '/usr/sbin/corosync-cmapctl'
   commands 'cibadmin' => '/usr/sbin/cibadmin'

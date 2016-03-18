@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:pcmk_nodes).provider(:ruby) do
+describe Puppet::Type.type(:pcmk_nodes).provider(:xml) do
 
   let(:resource) do
     Puppet::Type.type(:pcmk_nodes).new(
         :name => 'paceamker',
-        :provider => :ruby,
+        :provider => :xml,
         :nodes => nodes_data,
     )
   end
@@ -239,7 +239,7 @@ nodelist.node.2.ring0_addr (str) = 192.168.0.3
     let(:resource) do
       Puppet::Type.type(:pcmk_nodes).new(
           :name => 'paceamker',
-          :provider => :ruby,
+          :provider => :xml,
           :nodes => fqdn_nodes_data,
       )
     end

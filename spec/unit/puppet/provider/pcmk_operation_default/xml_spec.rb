@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:pcmk_operation_default).provider(:ruby) do
+describe Puppet::Type.type(:pcmk_operation_default).provider(:xml) do
 
   let(:operation) { Puppet::Type.type(:pcmk_operation_default).new(
       :name => 'my_default',
       :value => 'my_value',
-      :provider => :ruby,
+      :provider => :xml,
   )}
 
   let(:provider) do

@@ -1,23 +1,16 @@
 require 'rubygems'
 require 'puppet'
 
-base = File.expand_path File.join File.dirname(__FILE__), '..', 'pacemaker'
-require File.join base, 'provider'
+require_relative '../provider/pcmk_xml'
 
-# This file is like 'pcs status'. You can use it to view
+# This tool is like 'pcs status'. You can use it to view
 # the status of the cluster as this library sees it
 # using the debug output function.
 #
 # You can give it a dumped cib XML file for the first argument
 # id you want to debug the code without Pacemaker running.
 
-class Puppet::Provider::Pacemaker
-  # override debug method
-  def debug(msg)
-    puts msg
-  end
-  alias :info :debug
-
+class Puppet::Provider::PcmkXML
   [:cibadmin, :crm_attribute, :crm_node, :crm_resource, :crm_attribute].each do |tool|
     define_method(tool) do |*args|
       command = [tool.to_s] + args
@@ -28,9 +21,15 @@ class Puppet::Provider::Pacemaker
       end
     end
   end
+
+  # override debug method
+  def debug(msg)
+    puts msg
+  end
+  alias :info :debug
 end
 
-common = Puppet::Provider::Pacemaker.new
+common = Puppet::Provider::PcmkXML.new
 if $ARGV[0] and File.exists? $ARGV[0]
   xml = File.read $ARGV[0]
   common.cib = xml

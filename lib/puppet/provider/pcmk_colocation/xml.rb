@@ -1,10 +1,10 @@
-require File.join File.dirname(__FILE__), '../../pacemaker/provider'
+require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacemaker) do
-  desc 'Specific provider for a rather specific type since I currently have no plan to
-        abstract corosync/pacemaker vs. keepalived. This provider will check the state
-        of current primitive start orders on the system; add, delete, or adjust various
-        aspects.'
+Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
+  desc %q(Specific provider for a rather specific type since I currently have no plan to
+        abstract corosync/pacemaker vs. keepalived.  This provider will check the state
+        of current primitive colocations on the system; add, delete, or adjust various
+        aspects.)
 
   commands :cibadmin => 'cibadmin'
   commands :crm_attribute => 'crm_attribute'
@@ -21,9 +21,9 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
     debug 'Call: self.instances'
     proxy_instance = self.new
     instances = []
-    proxy_instance.constraint_orders.map do |title, data|
+    proxy_instance.constraint_colocations.map do |title, data|
       parameters = {}
-      debug "Prefetch constraint_order: #{title}"
+      debug "Prefetch constraint_colocation: #{title}"
       proxy_instance.retrieve_data data, parameters
       instance = self.new(parameters)
       instance.cib = proxy_instance.cib
@@ -43,28 +43,30 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
   end
 
   # retrieve data from library to the target_structure
-  # @param data [Hash] extracted order data
-  # will extract the current order data unless a value is provided
+  # @param data [Hash] extracted colocation data
+  # will extract the current colocation data unless a value is provided
   # @param target_structure [Hash] copy data to this structure
   # defaults to the property_hash of this provider
   def retrieve_data(data=nil, target_structure = property_hash)
-    data = constraint_orders.fetch resource[:name], {} unless data
-    target_structure[:name] = data['id'] if data['id']
+    data = constraint_colocations.fetch resource[:name], {} unless data
+    target_structure[:name ] = data['id'] if data['id']
     target_structure[:ensure] = :present
-    target_structure[:first] = data['first'] if data['first']
-    target_structure[:second] = data['then'] if data['then']
+    target_structure[:first] = data['with-rsc'] if data['with-rsc']
+    target_structure[:first] += ":#{data['with-rsc-role']}" if data['with-rsc-role']
+    target_structure[:second] = data['rsc'] if data['rsc']
+    target_structure[:second] += ":#{data['rsc-role']}" if data['rsc-role']
     target_structure[:score] = data['score'] if data['score']
   end
 
   def exists?
     debug 'Call: exists?'
-    out = constraint_order_exists? resource[:name]
+    out = constraint_colocation_exists? resource[:name]
     retrieve_data
     debug "Return: #{out}"
     out
   end
 
-  # check if the order ensure is set to present
+  # check if the colocation ensure is set to present
   # @return [TrueClass,FalseClass]
   def present?
     property_hash[:ensure] == :present
@@ -86,9 +88,16 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
   # Unlike create we actually immediately delete the item.
   def destroy
     debug 'Call: destroy'
-    constraint_order_remove resource[:name]
+    constraint_colocation_remove resource[:name]
     property_hash.clear
     cluster_debug_report "#{resource} destroy"
+  end
+
+
+  # Getter that obtains the our score that should have been populated by
+  # prefetch or instances (depends on if your using puppet resource or not).
+  def score
+    property_hash[:score]
   end
 
   # Getters that obtains the first and second primitives and score in our
@@ -100,10 +109,6 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
 
   def second
     property_hash[:second]
-  end
-
-  def score
-    property_hash[:score]
   end
 
   # Our setters for the first and second primitives and score.  Setters are
@@ -129,6 +134,10 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
     debug 'Call: flush'
     return unless property_hash and property_hash.any?
 
+    unless property_hash[:name] and property_hash[:score] and property_hash[:first] and property_hash[:second]
+      fail 'Data does not contain all the required fields!'
+    end
+
     unless primitive_exists? primitive_base_name property_hash[:first]
       fail "Primitive '#{property_hash[:first]}' does not exist!"
     end
@@ -137,26 +146,30 @@ Puppet::Type.type(:pcmk_order).provide(:ruby, :parent => Puppet::Provider::Pacem
       fail "Primitive '#{property_hash[:second]}' does not exist!"
     end
 
-    unless property_hash[:name] and property_hash[:score] and property_hash[:first] and property_hash[:second]
-      fail 'Data does not contain all the required fields!'
-    end
+    colocation_structure = {}
+    colocation_structure['id'] = property_hash[:name]
+    colocation_structure['score'] = property_hash[:score]
 
-    order_structure = {}
-    order_structure['id'] = property_hash[:name]
-    order_structure['score'] = property_hash[:score]
-    order_structure['first'] = property_hash[:first]
-    order_structure['then'] = property_hash[:second]
+    first_element_array = property_hash[:first].split ':'
+    second_element_array = property_hash[:second].split ':'
+    
+    colocation_structure['rsc'] = second_element_array[0]
+    colocation_structure['rsc-role'] = second_element_array[1] if second_element_array[1]
+    colocation_structure['with-rsc'] = first_element_array[0]
+    colocation_structure['with-rsc-role'] = first_element_array[1] if first_element_array[1]
 
-    order_patch = xml_document
-    order_element = xml_rsc_order order_structure
-    fail "Could not create XML patch for '#{resource}'" unless order_element
-    order_patch.add_element order_element
+
+    colocation_patch = xml_document
+    colocation_element = xml_rsc_colocation colocation_structure
+    fail "Could not create XML patch for '#{resource}'" unless colocation_element
+    colocation_patch.add_element colocation_element
 
     if present?
-      wait_for_constraint_update xml_pretty_format(order_patch.root), order_structure['id']
+      wait_for_constraint_update xml_pretty_format(colocation_patch.root), colocation_structure['id']
     else
-      wait_for_constraint_create xml_pretty_format(order_patch.root), order_structure['id']
+      wait_for_constraint_create xml_pretty_format(colocation_patch.root), colocation_structure['id']
     end
     cluster_debug_report "#{resource} flush"
   end
 end
+

@@ -1,13 +1,13 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:pcmk_order).provider(:ruby) do
+describe Puppet::Type.type(:pcmk_order).provider(:xml) do
 
   let(:resource) { Puppet::Type.type(:pcmk_order).new(
       :name => 'my_order',
       :first => 'p_1',
       :second => 'p_2',
       :score => '200',
-      :provider => :ruby,
+      :provider => :xml,
   ) }
 
   let(:provider) do

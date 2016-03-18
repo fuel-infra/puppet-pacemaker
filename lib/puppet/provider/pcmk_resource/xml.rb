@@ -1,6 +1,6 @@
-require File.join File.dirname(__FILE__), '../../pacemaker/provider'
+require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_resource).provide(:ruby, :parent => Puppet::Provider::Pacemaker) do
+Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
   desc 'Specific provider for a rather specific type since I currently have no
         plan to abstract corosync/pacemaker vs. keepalived.  Primitives in
         Corosync are the thing we desire to monitor; websites, ipaddresses,

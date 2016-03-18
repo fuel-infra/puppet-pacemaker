@@ -3,51 +3,49 @@ require 'rexml/formatters/pretty'
 require 'timeout'
 require 'yaml'
 
-base = File.expand_path File.dirname(__FILE__)
-
-require File.join base, 'cib'
-require File.join base, 'constraints'
-require File.join base, 'constraint_colocations'
-require File.join base, 'constraint_locations'
-require File.join base, 'constraint_orders'
-require File.join base, 'helpers'
-require File.join base, 'nodes'
-require File.join base, 'options'
-require File.join base, 'primitives'
-require File.join base, 'properties'
-require File.join base, 'debug'
-require File.join base, 'resource_defaults'
-require File.join base, 'operation_defaults'
-require File.join base, 'status'
-require File.join base, 'wait'
-require File.join base, 'xml'
-require File.join base, 'type'
+require_relative '../pacemaker/cib'
+require_relative '../pacemaker/constraints'
+require_relative '../pacemaker/constraint_colocations'
+require_relative '../pacemaker/constraint_locations'
+require_relative '../pacemaker/constraint_orders'
+require_relative '../pacemaker/helpers'
+require_relative '../pacemaker/nodes'
+require_relative '../pacemaker/options'
+require_relative '../pacemaker/primitives'
+require_relative '../pacemaker/properties'
+require_relative '../pacemaker/debug'
+require_relative '../pacemaker/resource_defaults'
+require_relative '../pacemaker/operation_defaults'
+require_relative '../pacemaker/status'
+require_relative '../pacemaker/wait'
+require_relative '../pacemaker/xml'
+require_relative '../pacemaker/type'
 
 # the parent provider for all other pacemaker providers
 # includes all functions from all submodules
-class Puppet::Provider::Pacemaker < Puppet::Provider
+class Puppet::Provider::PcmkXML < Puppet::Provider
 
   # include instance methods from the pacemaker library files
-  include ::Pacemaker::Cib
-  include ::Pacemaker::Constraints
-  include ::Pacemaker::ConstraintOrders
-  include ::Pacemaker::ConstraintLocations
-  include ::Pacemaker::ConstraintColocations
-  include ::Pacemaker::Helpers
-  include ::Pacemaker::Nodes
-  include ::Pacemaker::Options
-  include ::Pacemaker::Primitives
-  include ::Pacemaker::Properties
-  include ::Pacemaker::Debug
-  include ::Pacemaker::Resource_defaults
-  include ::Pacemaker::Operation_defaults
-  include ::Pacemaker::Status
-  include ::Pacemaker::Wait
-  include ::Pacemaker::Xml
-  include ::Pacemaker::Type
+  include Pacemaker::Cib
+  include Pacemaker::Constraints
+  include Pacemaker::ConstraintOrders
+  include Pacemaker::ConstraintLocations
+  include Pacemaker::ConstraintColocations
+  include Pacemaker::Helpers
+  include Pacemaker::Nodes
+  include Pacemaker::Options
+  include Pacemaker::Primitives
+  include Pacemaker::Properties
+  include Pacemaker::Debug
+  include Pacemaker::Resource_defaults
+  include Pacemaker::Operation_defaults
+  include Pacemaker::Status
+  include Pacemaker::Wait
+  include Pacemaker::Xml
+  include Pacemaker::Type
 
   # include class methods from the pacemaker options
-  extend  ::Pacemaker::Options
+  extend  Pacemaker::Options
 
   # reset all mnemoization variables
   # to force pacemaker to reload all the data structures

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:pcmk_location).provider(:ruby) do
+describe Puppet::Type.type(:pcmk_location).provider(:xml) do
 
   let(:resource) do
     Puppet::Type.type(:pcmk_location).new(
@@ -8,7 +8,7 @@ describe Puppet::Type.type(:pcmk_location).provider(:ruby) do
         :ensure => :present,
         :primitive => 'my_primitive',
         :node => 'my_node',
-        :provider => :ruby,
+        :provider => :xml,
         :score => '200',
     )
   end

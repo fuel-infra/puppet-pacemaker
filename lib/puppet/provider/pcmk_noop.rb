@@ -1,7 +1,7 @@
 # this is the abstract provider to create "noop" providers for pacemaker types
 # if a "noop" provider is used for a resource it will do nothing when applied
 # neither the retrieving nor the modification phase
-class Puppet::Provider::Noop < Puppet::Provider
+class Puppet::Provider::PcmkNoop < Puppet::Provider
   attr_accessor :property_hash
   attr_accessor :resource
 

@@ -1,7 +1,9 @@
 require 'puppet/parameter/boolean'
-module Puppet
-  newtype(:pcmk_resource_default) do
-    desc %q(Type for manipulating corosync/pacemaker configuration rsc_defaults.
+require_relative '../pacemaker/options'
+require_relative '../pacemaker/type'
+
+Puppet::Type.newtype(:pcmk_resource_default) do
+  desc %q(Type for manipulating corosync/pacemaker configuration rsc_defaults.
       Besides the configuration file that is managed by the module the contains
       all these related Corosync types and providers, there is a set of cluster
       rsc_defaults that can be set and saved inside the CIB (A CIB being a set of
@@ -14,30 +16,33 @@ module Puppet
 
       * http://clusterlabs.org/doc/en-US/Pacemaker/1.1-plugin/html/Clusters_from_Scratch/ch05s03s02.html)
 
-    ensurable
+  include Pacemaker::Options
+  include Pacemaker::Type
 
-    newparam(:name) do
-      desc %q(Name identifier of this rsc_defaults.  Simply the name of the cluster
+  ensurable
+
+  newparam(:name) do
+    desc %q(Name identifier of this rsc_defaults.  Simply the name of the cluster
         rsc_defaults.  Happily most of these are unique.)
 
-      isnamevar
-    end
+    isnamevar
+  end
 
-    newparam(:debug, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-      desc %q(Don't actually make changes)
-      defaultto false
-    end
+  newparam(:debug, :boolean => true, :parent => Puppet::Parameter::Boolean) do
+    desc %q(Don't actually make changes)
+    defaultto false
+  end
 
-    newproperty(:value) do
-      desc %q(Value of the rsc_defaults.  It is expected that this will be a single
+  newproperty(:value) do
+    desc %q(Value of the rsc_defaults.  It is expected that this will be a single
         value but we aren't validating string vs. integer vs. boolean because
         cluster rsc_resources can range the gambit.)
-      isrequired
-    end
-
-    autorequire(:service) do
-      ['corosync']
-    end
-
+    isrequired
   end
+
+  autorequire(:service) do
+    ['corosync']
+  end
+
 end
+

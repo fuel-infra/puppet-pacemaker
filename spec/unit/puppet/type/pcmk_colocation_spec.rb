@@ -5,6 +5,10 @@ describe Puppet::Type.type(:pcmk_colocation) do
     Puppet::Type.type(:pcmk_colocation)
   end
 
+  it 'should exist' do
+    is_expected.not_to be_nil
+  end
+
   it "should have a 'name' parameter" do
     expect(subject.new(
                :name => 'mock_resource',
@@ -94,4 +98,5 @@ describe Puppet::Type.type(:pcmk_colocation) do
       end
     end
   end
+
 end

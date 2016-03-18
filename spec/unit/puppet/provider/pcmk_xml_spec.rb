@@ -1,7 +1,8 @@
 require 'spec_helper'
-require File.join File.dirname(__FILE__), '../../../lib/puppet/pacemaker/provider'
 
-describe Puppet::Provider::Pacemaker do
+require_relative '../../../../lib/puppet/provider/pcmk_xml'
+
+describe Puppet::Provider::PcmkXML do
 
   cib_xml_file = File.join File.dirname(__FILE__), 'cib.xml'
 

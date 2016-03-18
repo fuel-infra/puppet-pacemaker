@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:pcmk_property).provider(:ruby) do
+describe Puppet::Type.type(:pcmk_property).provider(:xml) do
 
   let(:resource) { Puppet::Type.type(:pcmk_property).new(
       :name => 'my_property',
       :value => 'my_value',
-      :provider => :ruby,
+      :provider => :xml,
   )}
 
   let(:provider) do

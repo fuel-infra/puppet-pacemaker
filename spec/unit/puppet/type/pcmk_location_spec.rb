@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:pcmk_location) do
-
   subject do
     Puppet::Type.type(:pcmk_location)
   end

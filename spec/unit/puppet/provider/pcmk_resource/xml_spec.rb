@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
+describe Puppet::Type.type(:pcmk_resource).provider(:xml) do
 
   let(:resource) do
     Puppet::Type.type(:pcmk_resource).new(
@@ -8,7 +8,7 @@ describe Puppet::Type.type(:pcmk_resource).provider(:ruby) do
         :primitive_class => 'ocf',
         :primitive_provider => 'pacemaker',
         :primitive_type => 'Dummy',
-        :provider => :ruby,
+        :provider => :xml,
     )
   end
 
