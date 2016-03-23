@@ -99,19 +99,18 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
 
   # name of the basic service without 'p_' prefix
   # used to disable the basic service.
-  # Uses unmodified "name" property if it's not the same as title
+  # Uses "name" property if it's not the same as title
   # because most likely it will be the real system service name
   # @return [String]
   def basic_service_name
-    return service_name unless name_equals_title?
     return @basic_service_name if @basic_service_name
-    if name.start_with? 'p_'
-      basic_service_name = name.gsub(/^p_/, '')
-      debug "Using '#{basic_service_name}' as the basic service name for primitive '#{name}'"
-      @basic_service_name = basic_service_name
-    else
-      @basic_service_name = name
+    basic_service_name = name
+    basic_service_name = service_name unless name_equals_title?
+    if basic_service_name.start_with? 'p_'
+      basic_service_name = basic_service_name.gsub(/^p_/, '')
     end
+    debug "Using '#{basic_service_name}' as the basic service name for the primitive '#{name}'"
+    @basic_service_name = basic_service_name
   end
 
   # cleanup a primitive and
