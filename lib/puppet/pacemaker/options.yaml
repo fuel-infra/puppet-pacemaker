@@ -48,11 +48,19 @@
 :status_mode_simple: :global
 
 # try to stop and disable the basic init/upstart service
-# because it will mess with OCF-based Pacemaker primitive
-:disable_basic_service: true
+# on these provider actions
+# the basic service is the service managed by the system
+# init scripts or the upstart/systemd units
+# in order to run the Pacemaker service the basic service
+# should be stopped and disabled first so it will not mess
+# with the OCF script
+:disable_basic_service_on_start: true
+:disable_basic_service_on_stop: false
+:disable_basic_service_on_status: false
 
 # don't try to stop basic service for these primitive classes
 # because they are based on the native service manager
+# and the basic service and the Pacemaker service is the same thing
 :native_based_primitive_classes:
 - lsb
 - systemd

@@ -120,11 +120,31 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
     wait_for_status name
   end
 
+  # run the disable basic service action only
+  # if it's enabled fot this provider action
+  # and is globally enabled too
+  # @param [Symbol] action (:start/:stop/:status)
+  def disable_basic_service_on_action(action)
+    if action == :start
+      return unless pacemaker_options[:disable_basic_service_on_start]
+    elsif action == :stop
+      return unless pacemaker_options[:disable_basic_service_on_stop]
+    elsif action == :status
+      return unless pacemaker_options[:disable_basic_service_on_status]
+    else
+      fail "Action '#{action}' is incorrect!"
+    end
+
+    disable_basic_service
+  end
+
   # called by Puppet to determine if the service
   # is running on the local node
   # @return [:running,:stopped]
   def status
     debug "Call: 'status' for Pacemaker service '#{name}' on node '#{hostname}'"
+    disable_basic_service_on_action :status
+
     cib_reset 'service_status'
     wait_for_online 'service_status'
 
@@ -149,8 +169,6 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
       end
     end
 
-    disable_basic_service if pacemaker_options[:disable_basic_service]
-
     debug "Return: '#{out}' (#{out.class})"
     debug cluster_debug_report "#{@resource} status"
     out
@@ -159,6 +177,8 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
   # called by Puppet to start the service
   def start
     debug "Call 'start' for Pacemaker service '#{name}' on node '#{hostname}'"
+    disable_basic_service_on_action :start
+
     enable unless primitive_is_managed? name
 
     if pacemaker_options[:cleanup_on_start]
@@ -170,8 +190,6 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
     if pacemaker_options[:add_location_constraint]
       service_location_add full_name, hostname unless service_location_exists? full_name, hostname
     end
-
-    disable_basic_service if pacemaker_options[:disable_basic_service]
 
     unban_primitive name, hostname
     start_primitive name
@@ -189,6 +207,8 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
   # called by Puppet to stop the service
   def stop
     debug "Call 'stop' for Pacemaker service '#{name}' on node '#{hostname}'"
+    disable_basic_service_on_action :stop
+
     enable unless primitive_is_managed? name
 
     if pacemaker_options[:cleanup_on_stop]
@@ -196,8 +216,6 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
         cleanup
       end
     end
-
-    disable_basic_service if pacemaker_options[:disable_basic_service]
 
     if primitive_is_multistate? name
       service_stop_mode pacemaker_options[:stop_mode_multistate]
