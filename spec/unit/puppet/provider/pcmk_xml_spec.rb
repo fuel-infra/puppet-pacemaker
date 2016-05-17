@@ -3,7 +3,6 @@ require 'spec_helper'
 require_relative '../../../../lib/puppet/provider/pcmk_xml'
 
 describe Puppet::Provider::PcmkXML do
-
   cib_xml_file = File.join File.dirname(__FILE__), 'cib.xml'
 
   let(:raw_cib) do
@@ -11,7 +10,7 @@ describe Puppet::Provider::PcmkXML do
   end
 
   let(:resources_regexp) do
-    %r{nova|cinder|glance|keystone|neutron|sahara|murano|ceilometer|heat|swift}
+    /nova|cinder|glance|keystone|neutron|sahara|murano|ceilometer|heat|swift/
   end
 
   before(:each) do
@@ -22,32 +21,32 @@ describe Puppet::Provider::PcmkXML do
 
   let :location_data do
     {
-        "vip__public-on-node-1" =>
+        'vip__public-on-node-1' =>
             {
-                "score" => "100",
-                "rsc" => "vip__public",
-                "id" => "vip__public-on-node-1",
-                "node" => "node-1"
+                'score' => '100',
+                'rsc' => 'vip__public',
+                'id' => 'vip__public-on-node-1',
+                'node' => 'node-1'
             },
-        "loc_ping_vip__public" =>
+        'loc_ping_vip__public' =>
             {
-                "rsc" => "vip__public",
-                "id" => "loc_ping_vip__public",
-                "rules" => [
+                'rsc' => 'vip__public',
+                'id' => 'loc_ping_vip__public',
+                'rules' => [
                     {
-                        "score" => "-INFINITY",
-                        "id" => "loc_ping_vip__public-rule",
-                        "boolean-op" => "or",
-                        "expressions" => [
+                        'score' => '-INFINITY',
+                        'id' => 'loc_ping_vip__public-rule',
+                        'boolean-op' => 'or',
+                        'expressions' => [
                             {
-                                "attribute" => "pingd",
-                                "id" => "loc_ping_vip__public-expression",
-                                "operation" => "not_defined"
+                                'attribute' => 'pingd',
+                                'id' => 'loc_ping_vip__public-expression',
+                                'operation' => 'not_defined'
                             },
                             {
-                                "attribute" => "pingd",
-                                "id" => "loc_ping_vip__public-expression-0",
-                                "operation" => "lte", "value" => "0"
+                                'attribute' => 'pingd',
+                                'id' => 'loc_ping_vip__public-expression-0',
+                                'operation' => 'lte', 'value' => '0'
                             },
                         ]
                     }
@@ -58,162 +57,171 @@ describe Puppet::Provider::PcmkXML do
 
   let :colocation_data do
     {
-        "vip_management-with-haproxy" => {
-            'rsc' => "vip__management",
-            'score' => "INFINITY",
-            'with-rsc' => "clone_p_haproxy",
-            'id' => "vip_management-with-haproxy",
+        'vip_management-with-haproxy' => {
+            'rsc' => 'vip__management',
+            'score' => 'INFINITY',
+            'with-rsc' => 'p_haproxy-clone',
+            'id' => 'vip_management-with-haproxy',
         }
     }
   end
 
   let :order_data do
     {
-        'p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent' => {
-            'first' => "clone_p_neutron-plugin-openvswitch-agent",
-            'id' => "p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent",
-            'score' => "INFINITY",
-            'then' => "p_neutron-dhcp-agent",
-        }
+        'p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone' => {
+            'first' => 'p_neutron-plugin-openvswitch-agent-clone',
+            'id' => 'p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone',
+            'score' => 'INFINITY',
+            'then' => 'p_neutron-dhcp-agent',
+        },
+        'order-test1-test2-Mandatory' => {
+            'first'=>'test1',
+            'first-action'=>'promote',
+            'id'=>'order-test1-test2-Mandatory',
+            'kind'=>'Mandatory',
+            'symmetrical'=>'true',
+            'then'=>'test2',
+            'then-action'=>'start',
+        },
     }
   end
 
   let(:primitive_data) do
     {
-        "p_rabbitmq-server" =>
-            {"name" => "master_p_rabbitmq-server",
-             "class" => "ocf",
-             "id" => "p_rabbitmq-server",
-             "provider" => "mirantis",
-             "type" => "rabbitmq-server",
-             "complex" =>
-                 {"id" => "master_p_rabbitmq-server",
-                  "type" => "master",
-                  "meta_attributes" =>
-                      {"notify" =>
-                           {"id" => "master_p_rabbitmq-server-meta_attributes-notify",
-                            "name" => "notify",
-                            "value" => "true"},
-                       "master-node-max" =>
-                           {"id" => "master_p_rabbitmq-server-meta_attributes-master-node-max",
-                            "name" => "master-node-max",
-                            "value" => "1"},
-                       "ordered" =>
-                           {"id" => "master_p_rabbitmq-server-meta_attributes-ordered",
-                            "name" => "ordered",
-                            "value" => "false"},
-                       "master-max" =>
-                           {"id" => "master_p_rabbitmq-server-meta_attributes-master-max",
-                            "name" => "master-max",
-                            "value" => "1"},
-                       "interleave" =>
-                           {"id" => "master_p_rabbitmq-server-meta_attributes-interleave",
-                            "name" => "interleave",
-                            "value" => "true"}}},
-             "instance_attributes" =>
-                 {"node_port" =>
-                      {"id" => "p_rabbitmq-server-instance_attributes-node_port",
-                       "name" => "node_port",
-                       "value" => "5673"}},
-             "meta_attributes" =>
-                 {"migration-threshold" =>
-                      {"id" => "p_rabbitmq-server-meta_attributes-migration-threshold",
-                       "name" => "migration-threshold",
-                       "value" => "INFINITY"},
-                  "failure-timeout" =>
-                      {"id" => "p_rabbitmq-server-meta_attributes-failure-timeout",
-                       "name" => "failure-timeout",
-                       "value" => "60s"}},
-             "operations" =>
-                 {"p_rabbitmq-server-promote-0" =>
-                      {"id" => "p_rabbitmq-server-promote-0",
-                       "interval" => "0",
-                       "name" => "promote",
-                       "timeout" => "120"},
-                  "p_rabbitmq-server-monitor-30" =>
-                      {"id" => "p_rabbitmq-server-monitor-30",
-                       "interval" => "30",
-                       "name" => "monitor",
-                       "timeout" => "60",
-                       "OCF_CHECK_LEVEL" => "30"},
-                  "p_rabbitmq-server-start-0" =>
-                      {"id" => "p_rabbitmq-server-start-0",
-                       "interval" => "0",
-                       "name" => "start",
-                       "timeout" => "120"},
-                  "p_rabbitmq-server-monitor-27" =>
-                      {"id" => "p_rabbitmq-server-monitor-27",
-                       "interval" => "27",
-                       "name" => "monitor",
-                       "role" => "Master",
-                       "timeout" => "60"},
-                  "p_rabbitmq-server-stop-0" =>
-                      {"id" => "p_rabbitmq-server-stop-0",
-                       "interval" => "0",
-                       "name" => "stop",
-                       "timeout" => "60"},
-                  "p_rabbitmq-server-notify-0" =>
-                      {"id" => "p_rabbitmq-server-notify-0",
-                       "interval" => "0",
-                       "name" => "notify",
-                       "timeout" => "60"},
-                  "p_rabbitmq-server-demote-0" =>
-                      {"id" => "p_rabbitmq-server-demote-0",
-                       "interval" => "0",
-                       "name" => "demote",
-                       "timeout" => "60"}}},
-        "p_neutron-dhcp-agent" =>
-            {"name" => "p_neutron-dhcp-agent",
-             "class" => "ocf",
-             "id" => "p_neutron-dhcp-agent",
-             "provider" => "mirantis",
-             "type" => "neutron-agent-dhcp",
-             "instance_attributes" =>
-                 {"os_auth_url" =>
-                      {"id" => "p_neutron-dhcp-agent-instance_attributes-os_auth_url",
-                       "name" => "os_auth_url",
-                       "value" => "http://10.108.2.2:35357/v2.0"},
-                  "amqp_server_port" =>
-                      {"id" => "p_neutron-dhcp-agent-instance_attributes-amqp_server_port",
-                       "name" => "amqp_server_port",
-                       "value" => "5673"},
-                  "multiple_agents" =>
-                      {"id" => "p_neutron-dhcp-agent-instance_attributes-multiple_agents",
-                       "name" => "multiple_agents",
-                       "value" => "false"},
-                  "password" =>
-                      {"id" => "p_neutron-dhcp-agent-instance_attributes-password",
-                       "name" => "password",
-                       "value" => "7BqMhboS"},
-                  "tenant" =>
-                      {"id" => "p_neutron-dhcp-agent-instance_attributes-tenant",
-                       "name" => "tenant",
-                       "value" => "services"},
-                  "username" =>
-                      {"id" => "p_neutron-dhcp-agent-instance_attributes-username",
-                       "name" => "username",
-                       "value" => "undef"}},
-             "meta_attributes" =>
-                 {"resource-stickiness" =>
-                      {"id" => "p_neutron-dhcp-agent-meta_attributes-resource-stickiness",
-                       "name" => "resource-stickiness",
-                       "value" => "1"}},
-             "operations" =>
-                 {"p_neutron-dhcp-agent-monitor-20" =>
-                      {"id" => "p_neutron-dhcp-agent-monitor-20",
-                       "interval" => "20",
-                       "name" => "monitor",
-                       "timeout" => "10"},
-                  "p_neutron-dhcp-agent-start-0" =>
-                      {"id" => "p_neutron-dhcp-agent-start-0",
-                       "interval" => "0",
-                       "name" => "start",
-                       "timeout" => "60"},
-                  "p_neutron-dhcp-agent-stop-0" =>
-                      {"id" => "p_neutron-dhcp-agent-stop-0",
-                       "interval" => "0",
-                       "name" => "stop",
-                       "timeout" => "60"}}},
+        'p_rabbitmq-server' =>
+            {'name' => 'p_rabbitmq-server-master',
+             'class' => 'ocf',
+             'id' => 'p_rabbitmq-server',
+             'provider' => 'mirantis',
+             'type' => 'rabbitmq-server',
+             'complex' =>
+                 {'id' => 'p_rabbitmq-server-master',
+                  'type' => 'master',
+                  'meta_attributes' =>
+                      {'notify' =>
+                           {'id' => 'p_rabbitmq-server-master-meta_attributes-notify',
+                            'name' => 'notify',
+                            'value' => 'true'},
+                       'master-node-max' =>
+                           {'id' => 'p_rabbitmq-server-master-meta_attributes-master-node-max',
+                            'name' => 'master-node-max',
+                            'value' => '1'},
+                       'ordered' =>
+                           {'id' => 'p_rabbitmq-server-master-meta_attributes-ordered',
+                            'name' => 'ordered',
+                            'value' => 'false'},
+                       'master-max' =>
+                           {'id' => 'p_rabbitmq-server-master-meta_attributes-master-max',
+                            'name' => 'master-max',
+                            'value' => '1'},
+                       'interleave' =>
+                           {'id' => 'p_rabbitmq-server-master-meta_attributes-interleave',
+                            'name' => 'interleave',
+                            'value' => 'true'}}},
+             'instance_attributes' =>
+                 {'node_port' =>
+                      {'id' => 'p_rabbitmq-server-instance_attributes-node_port',
+                       'name' => 'node_port',
+                       'value' => '5673'}},
+             'meta_attributes' =>
+                 {'migration-threshold' =>
+                      {'id' => 'p_rabbitmq-server-meta_attributes-migration-threshold',
+                       'name' => 'migration-threshold',
+                       'value' => 'INFINITY'},
+                  'failure-timeout' =>
+                      {'id' => 'p_rabbitmq-server-meta_attributes-failure-timeout',
+                       'name' => 'failure-timeout',
+                       'value' => '60s'}},
+             'operations' =>
+                 {'p_rabbitmq-server-promote-0' =>
+                      {'id' => 'p_rabbitmq-server-promote-0',
+                       'interval' => '0',
+                       'name' => 'promote',
+                       'timeout' => '120'},
+                  'p_rabbitmq-server-monitor-30' =>
+                      {'id' => 'p_rabbitmq-server-monitor-30',
+                       'interval' => '30',
+                       'name' => 'monitor',
+                       'timeout' => '60',
+                       'OCF_CHECK_LEVEL' => '30'},
+                  'p_rabbitmq-server-start-0' =>
+                      {'id' => 'p_rabbitmq-server-start-0',
+                       'interval' => '0',
+                       'name' => 'start',
+                       'timeout' => '120'},
+                  'p_rabbitmq-server-monitor-27' =>
+                      {'id' => 'p_rabbitmq-server-monitor-27',
+                       'interval' => '27',
+                       'name' => 'monitor',
+                       'role' => 'Master',
+                       'timeout' => '60'},
+                  'p_rabbitmq-server-stop-0' =>
+                      {'id' => 'p_rabbitmq-server-stop-0',
+                       'interval' => '0',
+                       'name' => 'stop',
+                       'timeout' => '60'},
+                  'p_rabbitmq-server-notify-0' =>
+                      {'id' => 'p_rabbitmq-server-notify-0',
+                       'interval' => '0',
+                       'name' => 'notify',
+                       'timeout' => '60'},
+                  'p_rabbitmq-server-demote-0' =>
+                      {'id' => 'p_rabbitmq-server-demote-0',
+                       'interval' => '0',
+                       'name' => 'demote',
+                       'timeout' => '60'}}},
+        'p_neutron-dhcp-agent' =>
+            {'name' => 'p_neutron-dhcp-agent',
+             'class' => 'ocf',
+             'id' => 'p_neutron-dhcp-agent',
+             'provider' => 'mirantis',
+             'type' => 'neutron-agent-dhcp',
+             'instance_attributes' =>
+                 {'os_auth_url' =>
+                      {'id' => 'p_neutron-dhcp-agent-instance_attributes-os_auth_url',
+                       'name' => 'os_auth_url',
+                       'value' => 'http://10.108.2.2:35357/v2.0'},
+                  'amqp_server_port' =>
+                      {'id' => 'p_neutron-dhcp-agent-instance_attributes-amqp_server_port',
+                       'name' => 'amqp_server_port',
+                       'value' => '5673'},
+                  'multiple_agents' =>
+                      {'id' => 'p_neutron-dhcp-agent-instance_attributes-multiple_agents',
+                       'name' => 'multiple_agents',
+                       'value' => 'false'},
+                  'password' =>
+                      {'id' => 'p_neutron-dhcp-agent-instance_attributes-password',
+                       'name' => 'password',
+                       'value' => '7BqMhboS'},
+                  'tenant' =>
+                      {'id' => 'p_neutron-dhcp-agent-instance_attributes-tenant',
+                       'name' => 'tenant',
+                       'value' => 'services'},
+                  'username' =>
+                      {'id' => 'p_neutron-dhcp-agent-instance_attributes-username',
+                       'name' => 'username',
+                       'value' => 'undef'}},
+             'meta_attributes' =>
+                 {'resource-stickiness' =>
+                      {'id' => 'p_neutron-dhcp-agent-meta_attributes-resource-stickiness',
+                       'name' => 'resource-stickiness',
+                       'value' => '1'}},
+             'operations' =>
+                 {'p_neutron-dhcp-agent-monitor-20' =>
+                      {'id' => 'p_neutron-dhcp-agent-monitor-20',
+                       'interval' => '20',
+                       'name' => 'monitor',
+                       'timeout' => '10'},
+                  'p_neutron-dhcp-agent-start-0' =>
+                      {'id' => 'p_neutron-dhcp-agent-start-0',
+                       'interval' => '0',
+                       'name' => 'start',
+                       'timeout' => '60'},
+                  'p_neutron-dhcp-agent-stop-0' =>
+                      {'id' => 'p_neutron-dhcp-agent-stop-0',
+                       'interval' => '0',
+                       'name' => 'stop',
+                       'timeout' => '60'}}},
     }
   end
 
@@ -249,7 +257,7 @@ describe Puppet::Provider::PcmkXML do
       expect(subject.primitives['vip__public']['operations']['vip__public-start-0']).to be_a Hash
     end
 
-    it 'can determine is primitive is simple or complex' do
+    it 'can determine if primitive is simple or complex' do
       expect(subject.primitive_is_complex? 'p_haproxy').to eq true
       expect(subject.primitive_is_complex? 'vip__management').to eq false
     end
@@ -262,17 +270,53 @@ describe Puppet::Provider::PcmkXML do
     end
 
     it 'can generate a debug output' do
+      report = <<-eof
+
+Pacemaker debug block start at 'test'
+-> Clone primitive: 'p_neutron-plugin-openvswitch-agent-clone'
+   node-1: START (L) | node-2: STOP | node-3: STOP
+-> Simple primitive: 'p_ceilometer-alarm-evaluator'
+   node-1: STOP | node-2: STOP (F) | node-3: STOP (F)
+-> Simple primitive: 'p_heat-engine'
+   node-1: START (L) | node-2: STOP | node-3: STOP
+-> Simple primitive: 'p_ceilometer-agent-central' (M)
+   node-1: STOP | node-2: STOP (F) | node-3: STOP (F)
+-> Simple primitive: 'vip__management'
+   node-1: START (L) | node-2: STOP (L) | node-3: STOP (L)
+-> Clone primitive: 'ping_vip__public-clone'
+   node-1: START (L) | node-2: START (L) | node-3: START (L)
+-> Clone primitive: 'p_neutron-l3-agent-clone'
+   node-1: START (L) | node-2: STOP | node-3: STOP
+-> Clone primitive: 'p_neutron-metadata-agent-clone'
+   node-1: START (L) | node-2: STOP | node-3: STOP
+-> Clone primitive: 'p_mysql-clone'
+   node-1: START (L) | node-2: START (L) | node-3: STOP
+-> Simple primitive: 'p_neutron-dhcp-agent'
+   node-1: START (L) | node-2: STOP | node-3: STOP
+-> Simple primitive: 'vip__public'
+   node-1: START (L) | node-2: STOP (L) | node-3: STOP (L)
+-> Clone primitive: 'p_haproxy-clone'
+   node-1: START (L) | node-2: START (L) | node-3: STOP
+-> Master primitive: 'p_rabbitmq-server-master'
+   node-1: MASTER (L) | node-2: START (L) | node-3: STOP
+* symmetric-cluster: false
+* no-quorum-policy: ignore
+Pacemaker debug block end at 'test'
+      eof
       subject.stubs(:cib?).returns(true)
-      debug = subject.cluster_debug_report
-      expect(debug).to be_a String
-      expect(debug).not_to eq ''
+      debug = subject.cluster_debug_report 'test'
+      expect(debug).to eq report
+    end
+
+    it 'can determine the id of the DC node' do
+      expect(subject.dc).to eq '1'
     end
 
     it 'can determine the name of the DC node' do
-      expect(subject.dc).to eq 'node-1'
+      expect(subject.dc_name).to eq 'node-1'
     end
 
-    it 'can determite a global primitive status' do
+    it 'can determine the global primitive status' do
       expect(subject.primitive_status 'p_heat-engine').to eq('start')
       expect(subject.primitive_is_running? 'p_heat-engine').to eq true
       expect(subject.primitive_status 'p_ceilometer-agent-central').to eq('stop')
@@ -281,13 +325,19 @@ describe Puppet::Provider::PcmkXML do
       expect(subject.primitive_status 'UNKNOWN').to eq nil
     end
 
-    it 'can determine a local primitive status on a node' do
+    it 'can determine the local primitive status on a node' do
       expect(subject.primitive_status 'p_heat-engine', 'node-1').to eq('start')
       expect(subject.primitive_is_running? 'p_heat-engine', 'node-1').to eq true
       expect(subject.primitive_status 'p_heat-engine', 'node-2').to eq('stop')
       expect(subject.primitive_is_running? 'p_heat-engine', 'node-2').to eq false
       expect(subject.primitive_is_running? 'UNKNOWN', 'node-1').to eq nil
       expect(subject.primitive_status 'UNKNOWN', 'node-1').to eq nil
+    end
+
+    it 'can get the list of nodes where the primitive has the given status' do
+      expect(subject.primitive_has_status_on 'p_heat-engine', 'start').to eq(%w(node-1))
+      expect(subject.primitive_has_status_on 'p_heat-engine', 'stop').to eq(%w(node-2 node-3))
+      expect(subject.primitive_has_status_on 'p_heat-engine', 'master').to eq(%w())
     end
 
     it 'can determine if primitive is managed or not' do
@@ -323,11 +373,11 @@ describe Puppet::Provider::PcmkXML do
       expect(subject.primitive_is_complex? 'UNKNOWN').to eq nil
     end
 
-    it 'can determine that primitive is multistate' do
-      expect(subject.primitive_is_multistate? 'p_haproxy').to eq false
-      expect(subject.primitive_is_multistate? 'p_heat-engine').to eq false
-      expect(subject.primitive_is_multistate? 'p_rabbitmq-server').to eq true
-      expect(subject.primitive_is_multistate? 'UNKNOWN').to eq nil
+    it 'can determine that primitive is master' do
+      expect(subject.primitive_is_master? 'p_haproxy').to eq false
+      expect(subject.primitive_is_master? 'p_heat-engine').to eq false
+      expect(subject.primitive_is_master? 'p_rabbitmq-server').to eq true
+      expect(subject.primitive_is_master? 'UNKNOWN').to eq nil
     end
 
     it 'can determine that primitive has master running' do
@@ -373,15 +423,15 @@ describe Puppet::Provider::PcmkXML do
       expect(subject.constraints['p_heat-engine-on-node-1']['rsc']).to be_a String
       expect(subject.constraints['p_heat-engine-on-node-1']).to be_a(Hash)
       expect(subject.constraints['vip_management-with-haproxy']['with-rsc']).to be_a String
-      expect(subject.constraints['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']).to be_a(Hash)
-      expect(subject.constraints['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']['first']).to be_a String
+      expect(subject.constraints['p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone']).to be_a(Hash)
+      expect(subject.constraints['p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone']['first']).to be_a String
     end
 
     it 'can check if a constraint of any types exists' do
       expect(subject.constraint_exists? 'UNKNOWN').to eq(false)
       expect(subject.constraint_exists? 'p_heat-engine-on-node-1').to eq(true)
       expect(subject.constraint_exists? 'p_heat-engine-on-node-1').to eq(true)
-      expect(subject.constraint_exists? 'p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent').to eq(true)
+      expect(subject.constraint_exists? 'p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone').to eq(true)
     end
 
     context '#location' do
@@ -436,11 +486,9 @@ describe Puppet::Provider::PcmkXML do
         expect(subject.service_location_exists?('test', 'node1')).to eq(false)
         expect(subject.service_location_exists?('p_heat-engine', 'node-1')).to eq(true)
       end
-
     end
 
     context '#colocation' do
-
       let(:colocation_structure) {
         {
             'id' => 'test1-with-test2',
@@ -485,18 +533,37 @@ describe Puppet::Provider::PcmkXML do
     end
 
     context '#order' do
-      let(:order_structure) {
+      let(:order_score_structure) {
         {
             'id' => 'test1-after-test2',
             'first' => 'test2',
-            'after' => 'test1',
+            'then' => 'test1',
             'score' => '100',
         }
       }
 
-      let(:order_xml) {
+      let(:order_kind_structure) {
+        {
+            'id' => 'test1-after-test2',
+            'first' => 'test2',
+            'then' => 'test1',
+            'kind' => 'Mandatory',
+            'first-action' => 'promote',
+            'second-action' => 'demote',
+            'require-all' => 'false',
+            'symmetrical' => 'false',
+        }
+      }
+
+      let(:order_score_xml) {
         <<-eof
-<rsc_order after='test1' first='test2' id='test1-after-test2' score='100'/>
+<rsc_order first='test2' id='test1-after-test2' score='100' then='test1'/>
+        eof
+      }
+
+      let(:order_kind_xml) {
+        <<-eof
+<rsc_order first='test2' first-action='promote' id='test1-after-test2' kind='Mandatory' require-all='false' second-action='demote' symmetrical='false' then='test1'/>
         eof
       }
 
@@ -508,22 +575,36 @@ describe Puppet::Provider::PcmkXML do
 
       it 'can get the order structure from the CIB XML' do
         expect(subject.constraint_orders).to be_a(Hash)
-        expect(subject.constraint_orders['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']).to be_a(Hash)
-        expect(subject.constraint_orders['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']['first']).to be_a String
+        expect(subject.constraint_orders['p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone']).to be_a(Hash)
+        expect(subject.constraint_orders['p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone']['first']).to be_a String
+        expect(subject.constraint_orders['p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone']['score']).to be_a String
+        expect(subject.constraint_orders['order-test1-test2-Mandatory']).to be_a(Hash)
+        expect(subject.constraint_orders['order-test1-test2-Mandatory']['first']).to be_a String
+        expect(subject.constraint_orders['order-test1-test2-Mandatory']['kind']).to be_a String
       end
 
-      it 'can add an order constraint' do
-        subject.expects(:wait_for_constraint_create).with order_xml, order_structure['id']
-        subject.constraint_order_add order_structure
+      it 'can add an order constraint with score' do
+        subject.expects(:wait_for_constraint_create).with order_score_xml, order_score_structure['id']
+        subject.constraint_order_add order_score_structure
+      end
+
+      it 'can add an order constraint with kind' do
+        subject.expects(:wait_for_constraint_create).with order_kind_xml, order_kind_structure['id']
+        subject.constraint_order_add order_kind_structure
       end
 
       it 'can check if an order constraint exists' do
-        expect(subject.constraint_order_exists? 'p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent').to eq(true)
+        expect(subject.constraint_order_exists? 'p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone').to eq(true)
         expect(subject.constraint_order_exists? 'UNKNOWN').to eq(false)
       end
 
-      it 'can remove an order constraint' do
-        subject.expects(:wait_for_constraint_remove).with order_remove_xml, order_structure['id']
+      it 'can remove an order constraint with score' do
+        subject.expects(:wait_for_constraint_remove).with order_remove_xml, order_score_structure['id']
+        subject.constraint_order_remove 'test1-after-test2'
+      end
+
+      it 'can remove an order constraint with kind' do
+        subject.expects(:wait_for_constraint_remove).with order_remove_xml, order_kind_structure['id']
         subject.constraint_order_remove 'test1-after-test2'
       end
     end
@@ -540,7 +621,7 @@ describe Puppet::Provider::PcmkXML do
       end
 
       it 'waits for Pacemaker to become ready' do
-        subject.stubs(:is_online?).returns true
+        subject.stubs(:online?).returns true
         subject.wait_for_online
       end
 
@@ -551,7 +632,6 @@ describe Puppet::Provider::PcmkXML do
     end
 
     context '#service' do
-
       it 'waits for the service to start' do
         subject.stubs(:primitive_is_running?).with('myprimitive', nil).returns true
         subject.wait_for_start 'myprimitive'
@@ -615,7 +695,6 @@ describe Puppet::Provider::PcmkXML do
   end
 
   context '#xml_generation' do
-
     it 'can create a new XML document with the specified path' do
       doc = subject.xml_document %w(a b c)
       expect(doc).to be_a(REXML::Element)
@@ -647,7 +726,7 @@ describe Puppet::Provider::PcmkXML do
     end
 
     it 'can create a new xml element from a hash' do
-      hash = {'a' => '1', 'b' => 2, 'c' => :d, :e => [1, 2, 3], :f => {:g => 1, :h => 2}, 'o' => 'skip'}
+      hash = {'a' => '1', 'b' => 2, 'c' => :d, :e => [1, 2, 3], :f => {g: 1, h: 2}, 'o' => 'skip'}
       element = subject.xml_element 'test', hash, 'o'
       expect(element.to_s).to eq("<test a='1' b='2' c='d'/>")
     end
@@ -655,25 +734,25 @@ describe Puppet::Provider::PcmkXML do
     it 'can create an xml element from a simple rsc_location data structure' do
       data = location_data['vip__public-on-node-1']
       location = subject.xml_rsc_location data
-      expect(subject.xml_pretty_format location).to eq(<<-eos
+      xml = <<-eos
 <rsc_location id='vip__public-on-node-1' node='node-1' rsc='vip__public' score='100'/>
-                                                   eos
-                                                   )
+      eos
+      expect(subject.xml_pretty_format location).to eq(xml)
     end
 
     context 'location' do
       it 'can create an xml element from a rule based rsc_location structure' do
         data = location_data['loc_ping_vip__public']
         location = subject.xml_rsc_location data
-        expect(subject.xml_pretty_format location).to eq(<<-eos
+        xml = <<-eos
 <rsc_location id='loc_ping_vip__public' rsc='vip__public'>
   <rule boolean-op='or' id='loc_ping_vip__public-rule' score='-INFINITY'>
     <expression attribute='pingd' id='loc_ping_vip__public-expression' operation='not_defined'/>
     <expression attribute='pingd' id='loc_ping_vip__public-expression-0' operation='lte' value='0'/>
   </rule>
 </rsc_location>
-                                                     eos
-                                                     )
+        eos
+        expect(subject.xml_pretty_format location).to eq(xml)
       end
 
       it 'can match a generated and a parsed XML to the original data for a rule based location' do
@@ -698,10 +777,10 @@ describe Puppet::Provider::PcmkXML do
       it 'can create an XML element from a rsc_colocation structure' do
         data = colocation_data['vip_management-with-haproxy']
         colocation = subject.xml_rsc_colocation data
-        expect(subject.xml_pretty_format colocation).to eq(<<-eos
-<rsc_colocation id='vip_management-with-haproxy' rsc='vip__management' score='INFINITY' with-rsc='clone_p_haproxy'/>
-                                                       eos
-                                                       )
+        xml = <<-eos
+<rsc_colocation id='vip_management-with-haproxy' rsc='vip__management' score='INFINITY' with-rsc='p_haproxy-clone'/>
+        eos
+        expect(subject.xml_pretty_format colocation).to eq(xml)
       end
 
       it 'can match a generated and a parsed XML to the original data for a colocation' do
@@ -714,17 +793,34 @@ describe Puppet::Provider::PcmkXML do
     end
 
     context 'order' do
-      it 'can create an XML element from a rsc_order structure' do
-        data = order_data['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']
+      it 'can create an XML element with score from a rsc_order structure' do
+        data = order_data['p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone']
         order = subject.xml_rsc_order data
-        expect(subject.xml_pretty_format order).to eq(<<-eos
-<rsc_order first='clone_p_neutron-plugin-openvswitch-agent' id='p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent' score='INFINITY' then='p_neutron-dhcp-agent'/>
-                                                  eos
-                                                  )
+        xml = <<-eos
+<rsc_order first='p_neutron-plugin-openvswitch-agent-clone' id='p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone' score='INFINITY' then='p_neutron-dhcp-agent'/>
+        eos
+        expect(subject.xml_pretty_format order).to eq(xml)
       end
 
-      it 'can match a generated and a parsed XML to the original data for an order' do
-        original_data = order_data['p_neutron-dhcp-agent-after-clone_p_neutron-plugin-openvswitch-agent']
+      it 'can create an XML element with kind from a rsc_order structure' do
+        data = order_data['order-test1-test2-Mandatory']
+        order = subject.xml_rsc_order data
+        xml = <<-eos
+<rsc_order first='test1' first-action='promote' id='order-test1-test2-Mandatory' kind='Mandatory' symmetrical='true' then='test2' then-action='start'/>
+        eos
+        expect(subject.xml_pretty_format order).to eq(xml)
+      end
+
+      it 'can match a generated and a parsed XML to the original data for an order with score' do
+        original_data = order_data['p_neutron-dhcp-agent-after-p_neutron-plugin-openvswitch-agent-clone']
+        generated_order_element = subject.xml_rsc_colocation original_data
+        decoded_data = subject.decode_constraint generated_order_element
+        decoded_data.delete 'type'
+        expect(original_data).to eq(decoded_data)
+      end
+
+      it 'can match a generated and a parsed XML to the original data for an order with kind' do
+        original_data = order_data['order-test1-test2-Mandatory']
         generated_order_element = subject.xml_rsc_colocation original_data
         decoded_data = subject.decode_constraint generated_order_element
         decoded_data.delete 'type'
@@ -736,7 +832,7 @@ describe Puppet::Provider::PcmkXML do
       it 'can create an XML element from a simple primitive structure' do
         data = primitive_data['p_neutron-dhcp-agent']
         primitive_element = subject.xml_primitive data
-        expect(subject.xml_pretty_format primitive_element).to eq(<<-eos
+        xml = <<-eos
 <primitive class='ocf' id='p_neutron-dhcp-agent' provider='mirantis' type='neutron-agent-dhcp'>
   <instance_attributes id='p_neutron-dhcp-agent-instance_attributes'>
     <nvpair id='p_neutron-dhcp-agent-instance_attributes-amqp_server_port' name='amqp_server_port' value='5673'/>
@@ -755,21 +851,21 @@ describe Puppet::Provider::PcmkXML do
     <op id='p_neutron-dhcp-agent-stop-0' interval='0' name='stop' timeout='60'/>
   </operations>
 </primitive>
-                                                              eos
-                                                              )
+        eos
+        expect(subject.xml_pretty_format primitive_element).to eq(xml)
       end
 
       it 'can create an XML element from a complex primitive structure' do
         data = primitive_data['p_rabbitmq-server']
         primitive_element = subject.xml_primitive data
-        expect(subject.xml_pretty_format primitive_element).to eq(<<-eos
-<master id='master_p_rabbitmq-server'>
-  <meta_attributes id='master_p_rabbitmq-server-meta_attributes'>
-    <nvpair id='master_p_rabbitmq-server-meta_attributes-interleave' name='interleave' value='true'/>
-    <nvpair id='master_p_rabbitmq-server-meta_attributes-master-max' name='master-max' value='1'/>
-    <nvpair id='master_p_rabbitmq-server-meta_attributes-master-node-max' name='master-node-max' value='1'/>
-    <nvpair id='master_p_rabbitmq-server-meta_attributes-notify' name='notify' value='true'/>
-    <nvpair id='master_p_rabbitmq-server-meta_attributes-ordered' name='ordered' value='false'/>
+        xml = <<-eos
+<master id='p_rabbitmq-server-master'>
+  <meta_attributes id='p_rabbitmq-server-master-meta_attributes'>
+    <nvpair id='p_rabbitmq-server-master-meta_attributes-interleave' name='interleave' value='true'/>
+    <nvpair id='p_rabbitmq-server-master-meta_attributes-master-max' name='master-max' value='1'/>
+    <nvpair id='p_rabbitmq-server-master-meta_attributes-master-node-max' name='master-node-max' value='1'/>
+    <nvpair id='p_rabbitmq-server-master-meta_attributes-notify' name='notify' value='true'/>
+    <nvpair id='p_rabbitmq-server-master-meta_attributes-ordered' name='ordered' value='false'/>
   </meta_attributes>
   <primitive class='ocf' id='p_rabbitmq-server' provider='mirantis' type='rabbitmq-server'>
     <instance_attributes id='p_rabbitmq-server-instance_attributes'>
@@ -794,8 +890,8 @@ describe Puppet::Provider::PcmkXML do
     </operations>
   </primitive>
 </master>
-                                                              eos
-                                                              )
+        eos
+        expect(subject.xml_pretty_format primitive_element).to eq(xml)
       end
 
       it 'can match a generated and a parsed XML to the original data for a simple primitive' do
@@ -814,7 +910,5 @@ describe Puppet::Provider::PcmkXML do
         expect(parsed_data).to eq original_data
       end
     end
-
   end
-
 end

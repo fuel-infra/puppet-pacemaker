@@ -1,31 +1,28 @@
 require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_location).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
-  desc %q(Specific provider for a rather specific type since I currently have no plan to
-        abstract corosync/pacemaker vs. keepalived.  This provider will check the state
-        of current primitive colocations on the system; add, delete, or adjust various
-        aspects.)
+Puppet::Type.type(:pcmk_location).provide(:xml, parent: Puppet::Provider::PcmkXML) do
+  desc 'Specific provider for a rather specific type since I currently have no plan to
+  abstract corosync/pacemaker vs. keepalived.  This provider will check the state
+  of current primitive colocations on the system; add, delete, or adjust various aspects.'
 
-  commands :cibadmin => 'cibadmin'
-  commands :crm_attribute => 'crm_attribute'
-  commands :crm_node => 'crm_node'
-  commands :crm_resource => 'crm_resource'
-  commands :crm_attribute => 'crm_attribute'
-
-  defaultfor :kernel => 'Linux'
+  commands cibadmin: 'cibadmin'
+  commands crm_attribute: 'crm_attribute'
+  commands crm_node: 'crm_node'
+  commands crm_resource: 'crm_resource'
+  commands crm_attribute: 'crm_attribute'
 
   attr_accessor :property_hash
   attr_accessor :resource
 
   def self.instances
     debug 'Call: self.instances'
-    proxy_instance = self.new
+    proxy_instance = new
     instances = []
     proxy_instance.constraint_locations.map do |title, data|
       parameters = {}
       debug "Prefetch constraint_location: #{title}"
       proxy_instance.retrieve_data data, parameters
-      instance = self.new(parameters)
+      instance = new(parameters)
       instance.cib = proxy_instance.cib
       instances << instance
     end
@@ -47,7 +44,7 @@ Puppet::Type.type(:pcmk_location).provide(:xml, :parent => Puppet::Provider::Pcm
   # will extract the current location data unless a value is provided
   # @param target_structure [Hash] copy data to this structure
   # defaults to the property_hash of this provider
-  def retrieve_data(data=nil, target_structure = property_hash)
+  def retrieve_data(data = nil, target_structure = property_hash)
     debug 'Call: retrieve_data'
     data = constraint_locations.fetch resource[:name], {} unless data
     target_structure[:ensure] = :present
@@ -77,12 +74,12 @@ Puppet::Type.type(:pcmk_location).provide(:xml, :parent => Puppet::Provider::Pcm
   def create
     debug 'Call: create'
     self.property_hash = {
-        :name => resource[:name],
-        :ensure => :absent,
-        :primitive => resource[:primitive],
-        :node => resource[:node],
-        :score => resource[:score],
-        :rules => resource[:rules],
+        name: resource[:name],
+        ensure: :absent,
+        primitive: resource[:primitive],
+        node: resource[:node],
+        score: resource[:score],
+        rules: resource[:rules],
     }
   end
 
@@ -138,15 +135,15 @@ Puppet::Type.type(:pcmk_location).provide(:xml, :parent => Puppet::Provider::Pcm
   # as stdin for the crm command.
   def flush
     debug 'Call: flush'
-    return unless property_hash and property_hash.any?
+    return unless property_hash && property_hash.any?
 
     unless primitive_exists? primitive_base_name property_hash[:primitive]
-      fail "Primitive '#{property_hash[:primitive]}' does not exist!"
+      raise "Primitive '#{property_hash[:primitive]}' does not exist!"
     end
 
-    unless property_hash[:name] and property_hash[:primitive] and
-        (property_hash[:rules] or (property_hash[:score] and property_hash[:node]))
-      fail 'Data does not contain all the required fields!'
+    unless property_hash[:name] && property_hash[:primitive] &&
+        (property_hash[:rules] || (property_hash[:score] && property_hash[:node]))
+      raise 'Data does not contain all the required fields!'
     end
 
     location_structure = {}
@@ -158,7 +155,7 @@ Puppet::Type.type(:pcmk_location).provide(:xml, :parent => Puppet::Provider::Pcm
 
     location_patch = xml_document
     location_element = xml_rsc_location location_structure
-    fail "Could not create XML patch for '#{resource}'" unless location_element
+    raise "Could not create XML patch for '#{resource}'" unless location_element
     location_patch.add_element location_element
 
     if present?

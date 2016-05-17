@@ -1,7 +1,10 @@
 require 'puppetlabs_spec_helper/module_spec_helper'
 
-RSpec.configure do |config|
-  config.mock_framework = :mocha
+require 'rspec-puppet-facts'
+include RspecPuppetFacts
+
+RSpec.configure do |c|
+  c.mock_framework = :mocha
 end
 
 def puppet_debug_override

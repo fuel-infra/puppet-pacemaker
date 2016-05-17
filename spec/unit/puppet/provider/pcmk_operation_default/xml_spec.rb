@@ -1,12 +1,13 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:pcmk_operation_default).provider(:xml) do
-
-  let(:operation) { Puppet::Type.type(:pcmk_operation_default).new(
-      :name => 'my_default',
-      :value => 'my_value',
-      :provider => :xml,
-  )}
+  let(:operation) do
+    Puppet::Type.type(:pcmk_operation_default).new(
+        name: 'my_default',
+        value: 'my_value',
+        provider: :xml,
+    )
+  end
 
   let(:provider) do
     operation.provider
@@ -14,6 +15,7 @@ describe Puppet::Type.type(:pcmk_operation_default).provider(:xml) do
 
   before(:each) do
     puppet_debug_override
+    provider.stubs(:wait_for_online)
   end
 
   describe '#exists?' do
@@ -33,7 +35,14 @@ describe Puppet::Type.type(:pcmk_operation_default).provider(:xml) do
   describe '#update' do
     it 'should update operation default with corresponding value' do
       provider.expects(:operation_default_set).with('my_default', 'my_value')
-      provider.create
+      provider.value = 'my_value'
+    end
+  end
+
+  describe '#get' do
+    it 'should get a property' do
+      provider.expects(:operation_default_value).with('my_default')
+      provider.value
     end
   end
 
@@ -43,5 +52,4 @@ describe Puppet::Type.type(:pcmk_operation_default).provider(:xml) do
       provider.destroy
     end
   end
-
 end

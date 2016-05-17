@@ -1,34 +1,33 @@
 require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_resource_default).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
+Puppet::Type.type(:pcmk_resource_default).provide(:xml, parent: Puppet::Provider::PcmkXML) do
   desc 'Specific resource_default for a rather specific type since I currently have no plan to
-        abstract corosync/pacemaker vs. keepalived. This rsc_defaults will check the state
-        of Corosync cluster configuration properties.'
+  abstract corosync/pacemaker vs. keepalived. This rsc_defaults will check the state
+  of Corosync cluster configuration properties.'
 
-  commands :cibadmin => 'cibadmin'
-  commands :crm_attribute => 'crm_attribute'
-  commands :crm_node => 'crm_node'
-  commands :crm_resource => 'crm_resource'
-  commands :crm_attribute => 'crm_attribute'
-
-  defaultfor :kernel => 'Linux'
+  commands cibadmin: 'cibadmin'
+  commands crm_attribute: 'crm_attribute'
+  commands crm_node: 'crm_node'
+  commands crm_resource: 'crm_resource'
+  commands crm_attribute: 'crm_attribute'
 
   attr_accessor :property_hash
   attr_accessor :resource
- 
+
   def self.instances
     debug 'Call: self.instances'
-    proxy_instance = self.new
+    wait_for_online 'pcmk_resource_default'
+    proxy_instance = new
     instances = []
     proxy_instance.resource_defaults.map do |title, data|
       parameters = {}
-      debug "Prefetch operation_default: #{title}"
+      debug "Prefetch: #{title}"
       parameters[:ensure] = :present
       parameters[:value] = data['value']
       parameters[:name] = title
-      instance = self.new(parameters)
+      instance = new(parameters)
       instance.cib = proxy_instance.cib
-      instances  << instance
+      instances << instance
     end
     instances
   end
@@ -43,17 +42,14 @@ Puppet::Type.type(:pcmk_resource_default).provide(:xml, :parent => Puppet::Provi
     end
   end
 
+  # @return [true,false]
   def exists?
     debug 'Call: exists?'
+    wait_for_online 'pcmk_resource_default'
+    return property_hash[:ensure] == :present if property_hash[:ensure]
     out = resource_default_defined? resource[:name]
     debug "Return: #{out}"
     out
-  end
-
-  # check if the location ensure is set to present
-  # @return [TrueClass,FalseClass]
-  def present?
-    property_hash[:ensure] == :present
   end
 
   def create
@@ -76,8 +72,7 @@ Puppet::Type.type(:pcmk_resource_default).provide(:xml, :parent => Puppet::Provi
 
   def value=(should)
     debug "Call: value=#{should}"
-    fail 'There is no value!' unless should
+    raise 'There is no value!' unless should
     resource_default_set resource[:name], should
   end
-
 end

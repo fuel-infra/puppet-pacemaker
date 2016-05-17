@@ -1,15 +1,14 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:pcmk_location).provider(:xml) do
-
   let(:resource) do
     Puppet::Type.type(:pcmk_location).new(
-        :name => 'my_location',
-        :ensure => :present,
-        :primitive => 'my_primitive',
-        :node => 'my_node',
-        :provider => :xml,
-        :score => '200',
+        name: 'my_location',
+        ensure: :present,
+        primitive: 'my_primitive',
+        node: 'my_node',
+        provider: :xml,
+        score: '200',
     )
   end
 
@@ -40,7 +39,6 @@ describe Puppet::Type.type(:pcmk_location).provider(:xml) do
   end
 
   context '#create' do
-
     it 'should create a simple location' do
       xml = <<-eos
 <rsc_location id='my_location' node='my_node' rsc='my_primitive' score='200'/>
@@ -55,15 +53,15 @@ describe Puppet::Type.type(:pcmk_location).provider(:xml) do
       resource.delete :score
       resource[:rules] = [
           {
-              :score => 'inf',
-              :expressions => [
+              score: 'inf',
+              expressions: [
                   {
-                      :attribute => 'pingd1',
-                      :operation => 'defined',
+                      attribute: 'pingd1',
+                      operation: 'defined',
                   },
                   {
-                      :attribute => 'pingd2',
-                      :operation => 'defined',
+                      attribute: 'pingd2',
+                      operation: 'defined',
                   }
               ]
           }
@@ -88,20 +86,20 @@ describe Puppet::Type.type(:pcmk_location).provider(:xml) do
       resource.delete :score
       resource[:rules] = [
           {
-              :score => 'inf',
-              :expressions => [
+              score: 'inf',
+              expressions: [
                   {
-                      :attribute => 'pingd1',
-                      :operation => 'defined',
+                      attribute: 'pingd1',
+                      operation: 'defined',
                   }
               ]
           },
           {
-              :score => 'inf',
-              :expressions => [
+              score: 'inf',
+              expressions: [
                   {
-                      :attribute => 'pingd2',
-                      :operation => 'defined',
+                      attribute: 'pingd2',
+                      operation: 'defined',
                   }
               ]
           }
@@ -121,41 +119,35 @@ describe Puppet::Type.type(:pcmk_location).provider(:xml) do
       provider.create
       provider.flush
     end
-
   end
 
   context '#update' do
-      it 'should update a simple location' do
-        xml = <<-eos
+    it 'should update a simple location' do
+      xml = <<-eos
 <rsc_location id='my_location' node='my_node' rsc='my_primitive' score='200'/>
-        eos
-        provider.expects(:wait_for_constraint_update).with xml, resource[:name]
-        provider.create
-        provider.property_hash[:ensure] = :present
-        provider.flush
-      end
+      eos
+      provider.expects(:wait_for_constraint_update).with xml, resource[:name]
+      provider.create
+      provider.property_hash[:ensure] = :present
+      provider.flush
+    end
   end
 
   context '#exists' do
-
     it 'detects an existing location' do
       provider.stubs(:constraint_locations).returns(
-          {
-              'my_location' => {
-                  'rsc' => 'my_resource',
-                  'node' => 'my_node',
-                  'score' => '100',
-              }
+          'my_location' => {
+              'rsc' => 'my_resource',
+              'node' => 'my_node',
+              'score' => '100',
           }
       )
       expect(provider.exists?).to be_truthy
       provider.stubs(:constraint_locations).returns(
-          {
-              'other_location' => {
-                  'rsc' => 'other_resource',
-                  'node' => 'other_node',
-                  'score' => '100',
-              }
+          'other_location' => {
+              'rsc' => 'other_resource',
+              'node' => 'other_node',
+              'score' => '100',
           }
       )
       expect(provider.exists?).to be_falsey
@@ -165,12 +157,10 @@ describe Puppet::Type.type(:pcmk_location).provider(:xml) do
 
     it 'loads the current resource state' do
       provider.stubs(:constraint_locations).returns(
-          {
-              'my_location' => {
-                  'rsc' => 'my_resource',
-                  'node' => 'my_node',
-                  'score' => '100',
-              }
+          'my_location' => {
+              'rsc' => 'my_resource',
+              'node' => 'my_node',
+              'score' => '100',
           }
       )
       provider.exists?
@@ -178,7 +168,6 @@ describe Puppet::Type.type(:pcmk_location).provider(:xml) do
       expect(provider.node).to eq('my_node')
       expect(provider.score).to eq('100')
     end
-
   end
 
   context '#destroy' do
@@ -189,4 +178,3 @@ describe Puppet::Type.type(:pcmk_location).provider(:xml) do
     end
   end
 end
-

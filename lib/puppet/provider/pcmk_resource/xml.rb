@@ -1,34 +1,34 @@
 require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
-  desc 'Specific provider for a rather specific type since I currently have no
-        plan to abstract corosync/pacemaker vs. keepalived.  Primitives in
-        Corosync are the thing we desire to monitor; websites, ipaddresses,
-        databases, etc, etc.  Here we manage the creation and deletion of
-        these primitives.  We will accept a hash for what Corosync calls
-        operations and parameters.  A hash is used instead of constucting a
-        better model since these values can be almost anything.'
+Puppet::Type.type(:pcmk_resource).provide(:xml, parent: Puppet::Provider::PcmkXML) do
+  desc <<-eof
+Specific provider for a rather specific type since I currently have no
+plan to abstract corosync/pacemaker vs. keepalived. Primitives in
+Corosync are the thing we desire to monitor; websites, ipaddresses,
+databases, etc, etc. Here we manage the creation and deletion of
+these primitives. We will accept a hash for what Corosync calls
+operations and parameters. A hash is used instead of constucting a
+better model since these values can be almost anything.'
+  eof
 
-  commands :cibadmin => 'cibadmin'
-  commands :crm_attribute => 'crm_attribute'
-  commands :crm_node => 'crm_node'
-  commands :crm_resource => 'crm_resource'
-  commands :crm_attribute => 'crm_attribute'
-
-  defaultfor :kernel => 'Linux'
+  commands cibadmin: 'cibadmin'
+  commands crm_attribute: 'crm_attribute'
+  commands crm_node: 'crm_node'
+  commands crm_resource: 'crm_resource'
+  commands crm_attribute: 'crm_attribute'
 
   attr_accessor :property_hash
   attr_accessor :resource
 
   def self.instances
     debug 'Call: self.instances'
-    proxy_instance = self.new
+    proxy_instance = new
     instances = []
     proxy_instance.primitives.map do |title, data|
       parameters = {}
       debug "Prefetch resource: #{title}"
       proxy_instance.retrieve_data data, parameters
-      instance = self.new(parameters)
+      instance = new(parameters)
       instance.cib = proxy_instance.cib
       instances << instance
     end
@@ -45,71 +45,38 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
     end
   end
 
-  # import attributes structure from library representation to puppet
-  # @param attributes [Hash,Array,NilClass] hash or array of attributes from library
-  # @return [Hash] attributes (name => value)
-  def import_attributes(attributes)
-    return unless attributes.respond_to? :each
-    hash = {}
-    attributes.each do |attribute|
-      if attribute.is_a? Array and attribute.length == 2
-        attribute = attribute[1]
-      end
-      next unless attribute['name'] and attribute['value']
-      hash.store attribute['name'], attribute['value']
-    end
-    hash
-  end
-
-  # export puppet representation of attributes to the library one
-  # @param hash [Hash] attributes (name => value)
-  # @param attributes_id_tag [String] attributes name for id naming
-  # @return [Hash,NilClass]
-  def export_attributes(hash, attributes_id_tag)
-    return unless hash.is_a? Hash
-    attributes = {}
-    hash.each do |attribute_name, attribute_value|
-      id_components = [resource[:name], attributes_id_tag, attribute_name]
-      id_components.reject! { |v| v.nil? }
-      attribute_structure = {}
-      attribute_structure['id'] = id_components.join '-'
-      attribute_structure['name'] = attribute_name
-      attribute_structure['value'] = attribute_value
-      attributes.store attribute_name, attribute_structure
-    end
-    attributes
-  end
-
   # retrieve data from library to the target_structure
   # @param data [Hash] extracted primitive data
   # will extract the current primitive data unless a value is provided
   # @param target_structure [Hash] copy data to this structure
   # defaults to the property_hash of this provider
-  def retrieve_data(data=nil, target_structure = property_hash)
+  def retrieve_data(data = nil, target_structure = property_hash)
     debug 'Call: retrieve_data'
     data = primitives.fetch resource[:name], {} unless data
     target_structure[:ensure] = :present
+    target_structure[:complex_type] = :simple
     copy_value data, 'id', target_structure, :name
     copy_value data, 'class', target_structure, :primitive_class
     copy_value data, 'provider', target_structure, :primitive_provider
     copy_value data, 'type', target_structure, :primitive_type
 
     if data['complex']
-      target_structure[:complex_type] = data['complex']['type'].to_sym if data['complex']['type']
-      complex_metadata = import_attributes data['complex']['meta_attributes']
+      data_complex_type = data['complex']['type'].to_sym
+      target_structure[:complex_type] = data_complex_type if complex_types.include? data_complex_type
+      complex_metadata = import_attributes_structure data['complex']['meta_attributes']
       target_structure[:complex_metadata] = complex_metadata if complex_metadata
     end
 
     if data['instance_attributes']
-      parameters_data = import_attributes data['instance_attributes']
-      if parameters_data and parameters_data.is_a? Hash
+      parameters_data = import_attributes_structure data['instance_attributes']
+      if parameters_data && parameters_data.is_a?(Hash)
         target_structure[:parameters] = parameters_data if parameters_data
       end
     end
 
     if data['meta_attributes']
-      metadata_data = import_attributes data['meta_attributes']
-      if metadata_data and metadata_data.is_a? Hash
+      metadata_data = import_attributes_structure data['meta_attributes']
+      if metadata_data && metadata_data.is_a?(Hash)
         target_structure[:metadata] = metadata_data
       end
     end
@@ -122,7 +89,6 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
       end
       target_structure[:operations] = operations_data
     end
-
   end
 
   def exists?
@@ -139,8 +105,24 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
     property_hash[:ensure] == :present
   end
 
+  # check if the complex type of the resource is changing
+  # and we have to recreate it
+  # @return [true,false]
   def complex_change?
-    primitive_complex_type(resource[:name]) != property_hash[:complex_type]
+    current_complex_type = primitive_complex_type(name) || :simple
+    current_complex_type != complex_type
+  end
+
+  # is this primitive complex?
+  # @return [true,false]
+  def is_complex?
+    complex_types.include? complex_type
+  end
+
+  # list of the actually supported complex types
+  # @return [Array<Symbol>]
+  def complex_types
+    [:clone, :master]
   end
 
   # Create just adds our resource to the property_hash and flush will take care
@@ -148,7 +130,7 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
   def create
     debug 'Call: create'
     self.property_hash = {
-        :ensure => :absent,
+        ensure: :absent,
     }
 
     parameters = [
@@ -171,9 +153,18 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
   # use cibadmin to remove the XML section describing this primitive
   def remove_primitive
     return unless primitive_exists? resource[:name]
+    stop_service
     primitive_tag = 'primitive'
     primitive_tag = primitive_complex_type resource[:name] if primitive_is_complex? resource[:name]
     wait_for_primitive_remove "<#{primitive_tag} id='#{primitive_full_name resource[:name]}'/>\n", resource[:name]
+    property_hash[:ensure] = :absent
+  end
+
+  # stop the primitive before its removal
+  def stop_service
+    stop_primitive primitive_full_name resource[:name]
+    cleanup_primitive primitive_full_name resource[:name]
+    wait_for_stop resource[:name]
   end
 
   # Unlike create we actually immediately delete the item.  Corosync forces us
@@ -205,7 +196,11 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
   end
 
   def complex_type
-    property_hash[:complex_type]
+    if property_hash[:complex_type].respond_to? :to_sym
+      property_hash[:complex_type].to_sym
+    else
+      property_hash[:complex_type]
+    end
   end
 
   def primitive_class
@@ -221,10 +216,10 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
   end
 
   def full_name
-    if complex_type
-      "#{complex_type}_#{resource[:name]}"
+    if is_complex?
+      "#{name}-#{complex_type}"
     else
-      resource[:name]
+      name
     end
   end
 
@@ -271,60 +266,55 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
   # that can be used by the crm command.
   def flush
     debug 'Call: flush'
-    return unless property_hash and property_hash.any?
+    return unless property_hash && property_hash.any?
 
-    if property_hash[:complex_metadata] and not property_hash[:complex_type]
-      fail 'You should not use ms_metadata if your resource is not clone or master!' if self[:complex_metadata].any?
+    unless primitive_class && primitive_type
+      raise 'Primitive class and type should be present!'
     end
 
-    unless property_hash[:primitive_type] and property_hash[:primitive_provider] and property_hash[:primitive_class]
-      fail 'Primitive class, type and provider should present!'
-    end
-
+    # if the complex type is changing we have to remove the resource
+    # and create a new one with the correct complex type
     if complex_change?
       debug 'Changing the complex type of the primitive. First remove and then create it!'
       remove_primitive
-      property_hash[:ensure] = :absent
     end
 
     # basic primitive structure
     primitive_structure = {}
-    copy_value property_hash, :name, primitive_structure, 'id'
-    copy_value property_hash, :name, primitive_structure, 'name'
-    copy_value property_hash, :primitive_class, primitive_structure, 'class'
-    copy_value property_hash, :primitive_provider, primitive_structure, 'provider'
-    copy_value property_hash, :primitive_type, primitive_structure, 'type'
+    primitive_structure['id'] = name
+    primitive_structure['name'] = full_name
+    primitive_structure['class'] = primitive_class
+    primitive_structure['provider'] = primitive_provider if primitive_provider
+    primitive_structure['type'] = primitive_type
 
     # complex structure
-    if complex_type
+    if is_complex?
       complex_structure = {}
-      complex_structure['type'] = property_hash[:complex_type].to_s
+      complex_structure['type'] = complex_type
       complex_structure['id'] = full_name
 
       # complex meta_attributes structure
-      if property_hash[:complex_metadata] and property_hash[:complex_metadata].any?
-        meta_attributes_structure = export_attributes property_hash[:complex_metadata], 'meta_attributes'
+      if complex_metadata && complex_metadata.any?
+        meta_attributes_structure = export_attributes_structure complex_metadata, 'meta_attributes'
         complex_structure['meta_attributes'] = meta_attributes_structure if meta_attributes_structure
       end
-
-      primitive_structure['name'] = complex_structure['id']
       primitive_structure['complex'] = complex_structure
     end
 
     # operations structure
-    if property_hash[:operations] and property_hash[:operations].any?
+    if operations && operations.any?
       primitive_structure['operations'] = {}
-      property_hash[:operations].each do |operation|
-        if operation.is_a? Array and operation.length == 2
+      operations.each do |operation|
+        if operation.is_a?(Array) && operation.length == 2
           # operations were provided and Hash { name => { parameters } }, convert it
-          name = operation[0]
+          operation_name = operation[0]
           operation = operation[1]
-          operation['name'] = name unless operation['name']
+          operation['name'] = operation_name unless operation['name']
         end
         unless operation['id']
           # there is no id provided, generate it
-          id_components = [property_hash[:name], operation['name'], operation['interval']]
-          id_components.reject! { |v| v.nil? }
+          id_components = [name, operation['name'], operation['interval']]
+          id_components.reject!(&:nil?)
           operation['id'] = id_components.join '-'
         end
         primitive_structure['operations'].store operation['id'], operation
@@ -332,21 +322,21 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
     end
 
     # instance_attributes structure
-    if property_hash[:parameters] and property_hash[:parameters].any?
-      instance_attributes_structure = export_attributes property_hash[:parameters], 'instance_attributes'
+    if parameters && parameters.any?
+      instance_attributes_structure = export_attributes_structure parameters, 'instance_attributes'
       primitive_structure['instance_attributes'] = instance_attributes_structure if instance_attributes_structure
     end
 
     # meta_attributes structure
-    if property_hash[:metadata] and property_hash[:metadata].any?
-      meta_attributes_structure = export_attributes property_hash[:metadata], 'meta_attributes'
+    if metadata && metadata.any?
+      meta_attributes_structure = export_attributes_structure metadata, 'meta_attributes'
       primitive_structure['meta_attributes'] = meta_attributes_structure
     end
 
     # create and apply XML patch
     primitive_patch = xml_document
     primitive_element = xml_primitive primitive_structure
-    fail "Could not create XML patch for '#{resource}'" unless primitive_element
+    raise "Could not create XML patch for '#{resource}'" unless primitive_element
     primitive_patch.add_element primitive_element
     if present?
       wait_for_primitive_update xml_pretty_format(primitive_patch.root), primitive_structure['id']
@@ -355,5 +345,4 @@ Puppet::Type.type(:pcmk_resource).provide(:xml, :parent => Puppet::Provider::Pcm
     end
     cluster_debug_report "#{resource} flush"
   end
-
 end

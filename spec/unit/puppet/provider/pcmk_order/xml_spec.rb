@@ -1,14 +1,14 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:pcmk_order).provider(:xml) do
-
-  let(:resource) { Puppet::Type.type(:pcmk_order).new(
-      :name => 'my_order',
-      :first => 'p_1',
-      :second => 'p_2',
-      :score => '200',
-      :provider => :xml,
-  ) }
+  let(:resource) do
+    Puppet::Type.type(:pcmk_order).new(
+        name: 'my_order',
+        first: 'p_1',
+        second: 'p_2',
+        provider: :xml,
+    )
+  end
 
   let(:provider) do
     resource.provider
@@ -22,47 +22,77 @@ describe Puppet::Type.type(:pcmk_order).provider(:xml) do
   end
 
   describe('#validation') do
-    it 'should fail if there is no first primitive in the CIB' do
+    it 'should fail if there is no "first" primitive in the CIB' do
       provider.stubs(:primitive_exists?).with('p_1').returns(false)
       provider.create
       expect { provider.flush }.to raise_error "Primitive 'p_1' does not exist!"
     end
 
-    it 'should fail if there is no second primitive in the CIB' do
+    it 'should fail if there is no "then" primitive in the CIB' do
       provider.stubs(:primitive_exists?).with('p_2').returns(false)
       provider.create
       expect { provider.flush }.to raise_error "Primitive 'p_2' does not exist!"
     end
-
-    it 'should fail if there is no "score" set' do
-      resource.delete :score
-      provider.create
-      expect { provider.flush }.to raise_error 'Data does not contain all the required fields!'
-    end
   end
 
-  describe '#update' do
+  context 'with #score' do
     it 'should update an order' do
       resource[:first] = 'p_1'
-      resource[:second] ='p_2'
+      resource[:second] = 'p_2'
+      resource[:score] = '100'
       provider.stubs(:constraint_order_exists?).returns(true)
       xml = <<-eos
-<rsc_order first='p_1' id='my_order' score='200' then='p_2'/>
+<rsc_order first='p_1' id='my_order' score='100' then='p_2'/>
       eos
       provider.expects(:wait_for_constraint_update).with xml, resource[:name]
       provider.create
       provider.property_hash[:ensure] = :present
       provider.flush
     end
+
+    it 'should create an order' do
+      resource[:first] = 'p_1'
+      resource[:second] = 'p_2'
+      resource[:score] = '100'
+      xml = <<-eos
+<rsc_order first='p_1' id='my_order' score='100' then='p_2'/>
+      eos
+      provider.expects(:wait_for_constraint_create).with xml, resource['name']
+      provider.create
+      provider.property_hash[:ensure] = :absent
+      provider.flush
+    end
   end
 
-  describe '#create' do
-    it 'should create an order with corresponding members' do
+  context 'with #kind' do
+    it 'should update an order' do
       resource[:first] = 'p_1'
-      resource[:second] ='p_2'
-      resource[:score] = 'inf'
+      resource[:second] = 'p_2'
+      resource[:first_action] = 'promote'
+      resource[:second_action] = 'demote'
+      resource[:kind] = 'serialize'
+      resource[:symmetrical] = false
+      resource[:require_all] = false
+      provider.stubs(:constraint_order_exists?).returns(true)
       xml = <<-eos
-<rsc_order first='p_1' id='my_order' score='INFINITY' then='p_2'/>
+<rsc_order first='p_1' first-action='promote' id='my_order' kind='Serialize' require-all='false' symmetrical='false' then='p_2' then-action='demote'/>
+      eos
+      provider.expects(:wait_for_constraint_update).with xml, resource[:name]
+      provider.create
+      provider.property_hash[:ensure] = :present
+      provider.flush
+    end
+
+    it 'should create an order' do
+      resource[:first] = 'p_1'
+      resource[:second] = 'p_2'
+      resource[:first_action] = 'promote'
+      resource[:second_action] = 'demote'
+      resource[:kind] = 'serialize'
+      resource[:symmetrical] = false
+      resource[:require_all] = false
+      xml = <<-eos
+<rsc_order first='p_1' first-action='promote' id='my_order' kind='Serialize' require-all='false' symmetrical='false' then='p_2' then-action='demote'/>
       eos
       provider.expects(:wait_for_constraint_create).with xml, resource['name']
       provider.create
@@ -79,6 +109,4 @@ describe Puppet::Type.type(:pcmk_order).provider(:xml) do
       provider.flush
     end
   end
-
 end
-

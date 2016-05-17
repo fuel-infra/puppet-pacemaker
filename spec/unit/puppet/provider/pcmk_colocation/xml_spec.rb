@@ -1,13 +1,14 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:pcmk_colocation).provider(:xml) do
-
-  let(:resource) { Puppet::Type.type(:pcmk_colocation).new(
-      :name => 'my_colocation',
-      :first => 'foo',
-      :second => 'bar',
-      :provider => :xml,
-  ) }
+  let(:resource) do
+    Puppet::Type.type(:pcmk_colocation).new(
+        name: 'my_colocation',
+        first: 'foo',
+        second: 'bar',
+        provider: :xml,
+    )
+  end
 
   let(:provider) do
     resource.provider
@@ -77,7 +78,4 @@ describe Puppet::Type.type(:pcmk_colocation).provider(:xml) do
       provider.flush
     end
   end
-
-
 end
-

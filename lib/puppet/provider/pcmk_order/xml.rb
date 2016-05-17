@@ -1,31 +1,31 @@
 require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_order).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
-  desc 'Specific provider for a rather specific type since I currently have no plan to
-        abstract corosync/pacemaker vs. keepalived. This provider will check the state
-        of current primitive start orders on the system; add, delete, or adjust various
-        aspects.'
+Puppet::Type.type(:pcmk_order).provide(:xml, parent: Puppet::Provider::PcmkXML) do
+  desc <<-eof
+Specific provider for a rather specific type since I currently have no plan to
+abstract corosync/pacemaker vs. keepalived. This provider will check the state
+of current primitive start orders on the system; add, delete, or adjust various
+aspects.
+eof
 
-  commands :cibadmin => 'cibadmin'
-  commands :crm_attribute => 'crm_attribute'
-  commands :crm_node => 'crm_node'
-  commands :crm_resource => 'crm_resource'
-  commands :crm_attribute => 'crm_attribute'
-
-  defaultfor :kernel => 'Linux'
+  commands cibadmin: 'cibadmin'
+  commands crm_attribute: 'crm_attribute'
+  commands crm_node: 'crm_node'
+  commands crm_resource: 'crm_resource'
+  commands crm_attribute: 'crm_attribute'
 
   attr_accessor :property_hash
   attr_accessor :resource
 
   def self.instances
     debug 'Call: self.instances'
-    proxy_instance = self.new
+    proxy_instance = new
     instances = []
     proxy_instance.constraint_orders.map do |title, data|
       parameters = {}
       debug "Prefetch constraint_order: #{title}"
       proxy_instance.retrieve_data data, parameters
-      instance = self.new(parameters)
+      instance = new(parameters)
       instance.cib = proxy_instance.cib
       instances << instance
     end
@@ -47,13 +47,18 @@ Puppet::Type.type(:pcmk_order).provide(:xml, :parent => Puppet::Provider::PcmkXM
   # will extract the current order data unless a value is provided
   # @param target_structure [Hash] copy data to this structure
   # defaults to the property_hash of this provider
-  def retrieve_data(data=nil, target_structure = property_hash)
+  def retrieve_data(data = nil, target_structure = property_hash)
     data = constraint_orders.fetch resource[:name], {} unless data
     target_structure[:name] = data['id'] if data['id']
     target_structure[:ensure] = :present
     target_structure[:first] = data['first'] if data['first']
     target_structure[:second] = data['then'] if data['then']
+    target_structure[:first_action] = data['first-action'].downcase if data['first-action']
+    target_structure[:second_action] = data['then-action'].downcase if data['then-action']
     target_structure[:score] = data['score'] if data['score']
+    target_structure[:kind] = data['kind'].downcase if data['kind']
+    target_structure[:symmetrical] = data['symmetrical'].downcase if data['symmetrical']
+    target_structure[:require_all] = data['require-all'].downcase if data['require-all']
   end
 
   def exists?
@@ -75,11 +80,16 @@ Puppet::Type.type(:pcmk_order).provide(:xml, :parent => Puppet::Provider::PcmkXM
   def create
     debug 'Call: create'
     self.property_hash = {
-        :name => resource[:name],
-        :ensure => :absent,
-        :first => resource[:first],
-        :second => resource[:second],
-        :score => resource[:score],
+        name: resource[:name],
+        ensure: :absent,
+        first: resource[:first],
+        second: resource[:second],
+        first_action: resource[:first_action],
+        second_action: resource[:second_action],
+        score: resource[:score],
+        kind: resource[:kind],
+        symmetrical: resource[:symmetrical],
+        require_all: resource[:require_all],
     }
   end
 
@@ -102,8 +112,40 @@ Puppet::Type.type(:pcmk_order).provide(:xml, :parent => Puppet::Provider::PcmkXM
     property_hash[:second]
   end
 
+  def first_action
+    if property_hash[:first_action].respond_to? :to_sym
+      property_hash[:first_action].to_sym
+    else
+      property_hash[:first_action]
+    end
+  end
+
+  def second_action
+    if property_hash[:second_action].respond_to? :to_sym
+      property_hash[:second_action].to_sym
+    else
+      property_hash[:second_action]
+    end
+  end
+
   def score
     property_hash[:score]
+  end
+
+  def kind
+    if property_hash[:kind].respond_to? :to_sym
+      property_hash[:kind].to_sym
+    else
+      property_hash[:kind]
+    end
+  end
+
+  def symmetrical
+    property_hash[:symmetrical]
+  end
+
+  def require_all
+    property_hash[:require_all]
   end
 
   # Our setters for the first and second primitives and score.  Setters are
@@ -117,8 +159,28 @@ Puppet::Type.type(:pcmk_order).provide(:xml, :parent => Puppet::Provider::PcmkXM
     property_hash[:second] = should
   end
 
+  def first_action=(should)
+    property_hash[:first_action] = should
+  end
+
+  def second_action=(should)
+    property_hash[:second_action] = should
+  end
+
   def score=(should)
     property_hash[:score] = should
+  end
+
+  def kind=(should)
+    property_hash[:kind] = should
+  end
+
+  def symmetrical=(should)
+    property_hash[:symmetrical] = should
+  end
+
+  def require_all=(should)
+    property_hash[:require_all] = should
   end
 
   # Flush is triggered on anything that has been detected as being
@@ -127,29 +189,34 @@ Puppet::Type.type(:pcmk_order).provide(:xml, :parent => Puppet::Provider::PcmkXM
   # as stdin for the crm command.
   def flush
     debug 'Call: flush'
-    return unless property_hash and property_hash.any?
+    return unless property_hash && property_hash.any?
 
     unless primitive_exists? primitive_base_name property_hash[:first]
-      fail "Primitive '#{property_hash[:first]}' does not exist!"
+      raise "Primitive '#{property_hash[:first]}' does not exist!"
     end
 
     unless primitive_exists? primitive_base_name property_hash[:second]
-      fail "Primitive '#{property_hash[:second]}' does not exist!"
+      raise "Primitive '#{property_hash[:second]}' does not exist!"
     end
 
-    unless property_hash[:name] and property_hash[:score] and property_hash[:first] and property_hash[:second]
-      fail 'Data does not contain all the required fields!'
+    unless property_hash[:name] && property_hash[:first] && property_hash[:second]
+      raise 'Data does not contain all the required fields!'
     end
 
     order_structure = {}
-    order_structure['id'] = property_hash[:name]
-    order_structure['score'] = property_hash[:score]
-    order_structure['first'] = property_hash[:first]
-    order_structure['then'] = property_hash[:second]
+    order_structure['id'] = name
+    order_structure['first'] = first
+    order_structure['then'] = second
+    order_structure['first-action'] = first_action.to_s if first_action
+    order_structure['then-action'] = second_action.to_s if second_action
+    order_structure['score'] = score.to_s if score
+    order_structure['kind'] = kind.to_s.capitalize if kind
+    order_structure['symmetrical'] = symmetrical.to_s unless symmetrical.nil?
+    order_structure['require-all'] = require_all.to_s unless require_all.nil?
 
     order_patch = xml_document
     order_element = xml_rsc_order order_structure
-    fail "Could not create XML patch for '#{resource}'" unless order_element
+    raise "Could not create XML patch for '#{resource}'" unless order_element
     order_patch.add_element order_element
 
     if present?

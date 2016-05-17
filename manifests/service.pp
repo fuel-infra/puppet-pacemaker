@@ -1,98 +1,83 @@
-define pacemaker::service (
-  $ensure              = 'present',
-  $ocf_root_path       = '/usr/lib/ocf',
-  $primitive_class     = 'ocf',
-  $primitive_provider  = 'fuel',
-  $primitive_type      = undef,
-  $prefix              = true,
+# == Class: pacemaker::service
+#
+# Manages the Corosync, Pacemaker and Pcsd services
+#
+class pacemaker::service (
+  $pcsd_manage        = $::pacemaker::params::pcsd_enable,
+  $pcsd_enable        = $::pacemaker::params::pcsd_enable,
+  $pcsd_service       = $::pacemaker::params::pcsd_service,
+  $pcsd_provider      = $::pacemaker::params::pcsd_provider,
+  
+  $corosync_manage    = $::pacemaker::params::corosync_enable,
+  $corosync_enable    = $::pacemaker::params::corosync_enable,
+  $corosync_service   = $::pacemaker::params::corosync_service,
+  $corosync_provider  = $::pacemaker::params::corosync_provider,
+  
+  $pacemaker_manage   = $::pacemaker::params::pacemaker_enable,
+  $pacemaker_enable   = $::pacemaker::params::pacemaker_enable,
+  $pacemaker_service  = $::pacemaker::params::pacemaker_service,
+  $pacemaker_provider = $::pacemaker::params::pacemaker_provider,
+) inherits ::pacemaker::params {
+  validate_bool($pcsd_manage)
+  validate_bool($pcsd_enable)
+  validate_string($pcsd_service)
 
-  $parameters          = undef,
-  $operations          = undef,
-  $metadata            = undef,
+  validate_bool($corosync_manage)
+  validate_bool($corosync_enable)
+  validate_string($corosync_service)
 
-  $complex_metadata    = undef,
-  $complex_type        = undef,
+  validate_bool($pacemaker_manage)
+  validate_bool($pacemaker_enable)
+  validate_string($pacemaker_service)
 
-  $use_handler         = true,
-  $handler_root_path   = '/usr/local/bin',
-
-  $ocf_script_template = undef,
-  $ocf_script_file     = undef,
-
-  $create_primitive    = true,
-) {
-  $service_name     = $name
-
-  if $prefix {
-    $primitive_name   = "p_${service_name}"
+  if $pcsd_enable {
+    $pcsd_ensure = 'running'
   } else {
-    $primitive_name   = $service_name
+    $pcsd_ensure = 'stopped'
   }
 
-  $ocf_script_name  = "${service_name}-ocf-file"
-  $ocf_handler_name = "ocf_handler_${service_name}"
-
-  $ocf_dir_path     = "${ocf_root_path}/resource.d"
-  $ocf_script_path  = "${ocf_dir_path}/${primitive_provider}/${$primitive_type}"
-  $ocf_handler_path = "${handler_root_path}/${ocf_handler_name}"
-
-  Service <| title == $service_name |> {
-    provider   => 'pacemaker',
+  if $corosync_enable {
+    $corosync_ensure = 'running'
+  } else {
+    $corosync_ensure = 'stopped'
   }
 
-  Service <| name == $service_name |> {
-    provider   => 'pacemaker',
+  if $pacemaker_enable {
+    $pacemaker_ensure = 'running'
+  } else {
+    $pacemaker_ensure = 'stopped'
   }
 
-  if $create_primitive {
-    pcmk_resource { $primitive_name :
-      ensure             => $ensure,
-      primitive_class    => $primitive_class,
-      primitive_type     => $primitive_type,
-      primitive_provider => $primitive_provider,
-      parameters         => $parameters,
-      operations         => $operations,
-      metadata           => $metadata,
-      complex_metadata   => $complex_metadata,
-      complex_type       => $complex_type,
+  if $pcsd_manage {
+    service { 'pcsd' :
+      ensure   => $pcsd_ensure,
+      enable   => $pcsd_enable,
+      name     => $pcsd_service,
+      provider => $pcsd_provider,
     }
   }
 
-  if $ocf_script_template or $ocf_script_file {
-    file { $ocf_script_name :
-      ensure  => $ensure,
-      path    => $ocf_script_path,
-      mode    => '0755',
-      owner   => 'root',
-      group   => 'root',
-    }
-
-    if $ocf_script_template {
-      File[$ocf_script_name] {
-        content => template($ocf_script_template),
-      }
-    } elsif $ocf_script_file {
-      File[$ocf_script_name] {
-        source => "puppet:///modules/${ocf_script_file}",
-      }
-    }
-
-  }
-
-  if ($primitive_class == 'ocf') and ($use_handler) {
-    file { $ocf_handler_name :
-      path    => $ocf_handler_path,
-      ensure  => 'present',
-      owner   => 'root',
-      group   => 'root',
-      mode    => '0700',
-      content => template('pacemaker/ocf_handler.erb'),
+  if $corosync_manage {
+    service { 'corosync' :
+      ensure   => $corosync_ensure,
+      enable   => $corosync_enable,
+      name     => $corosync_service,
+      provider => $corosync_provider,
+      tag      => 'cluster-service',
     }
   }
 
-  File <| title == $ocf_script_name |> -> Pcmk_resource <| title == $primitive_name |>
-  File <| title == $ocf_script_name |> ~> Service[$service_name]
-  Pcmk_resource <| title == $primitive_name |> -> Service[$service_name]
-  File <| title == $ocf_handler_name |> -> Service[$service_name]
+  if $pacemaker_manage {
+    service { 'pacemaker' :
+      ensure   => $pacemaker_ensure,
+      enable   => $pacemaker_enable,
+      name     => $pacemaker_service,
+      provider => $pacemaker_provider,
+      tag      => 'cluster-service',
+    }
+  }
 
+  Service <| title == 'corosync' |> ->
+  Service <| title == 'pacemaker' |>
+  
 }

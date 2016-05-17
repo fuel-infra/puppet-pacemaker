@@ -37,7 +37,7 @@ class Puppet::Provider::PcmkNoop < Puppet::Provider
   # of the resource properties
   # works directly with resource parameter values instead of property_hash
   def make_property_methods
-    properties = resource.properties.map { |p| p.name }
+    properties = resource.properties.map(&:name)
     properties.each do |property|
       next if property == :ensure
       self.class.send :define_method, property do
@@ -51,7 +51,5 @@ class Puppet::Provider::PcmkNoop < Puppet::Provider
         resource[property] = value
       end
     end
-
   end
-
 end

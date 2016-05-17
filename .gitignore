@@ -1,5 +1,17 @@
-.idea
-*.swp
+pkg/
 Gemfile.lock
+vendor/
+spec/fixtures/
+.vagrant/
+.bundle/
+coverage/
+log/
+.idea/
+*.iml
+.*.sw
+
+# documentation
 doc
 .yardoc
+.yardwarns
+strings.json

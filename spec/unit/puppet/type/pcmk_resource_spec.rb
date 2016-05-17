@@ -7,7 +7,7 @@ describe Puppet::Type.type(:pcmk_resource) do
 
   let(:instance) do
     subject.new(
-        :name => 'mock_resource',
+        name: 'mock_resource',
     )
   end
 
@@ -55,8 +55,8 @@ describe Puppet::Type.type(:pcmk_resource) do
       it "should validate that the #{attribute} attribute must be a hash" do
         expect {
           subject.new(
-              :name => 'mock_resource',
-              :parameters => 'fail'
+              name: 'mock_resource',
+              parameters: 'fail'
           )
         }.to raise_error(Puppet::Error, /hash/)
       end
@@ -81,45 +81,44 @@ describe Puppet::Type.type(:pcmk_resource) do
     end
 
     context 'on operations' do
-
       it 'should change operations format if provided as hash' do
-        data_from = {"start" => {"timeout" => "20", "interval" => "0"}, "monitor" => {"interval" => "10"}}
-        data_to = [{"interval" => "10", "name" => "monitor"}, {"timeout" => "20", "name" => "start", "interval" => "0"}]
+        data_from = {'start' => {'timeout' => '20', 'interval' => '0'}, 'monitor' => {'interval' => '10'}}
+        data_to = [{'interval' => '10', 'name' => 'monitor'}, {'timeout' => '20', 'name' => 'start', 'interval' => '0'}]
         instance[:operations] = data_from
         expect(instance[:operations]).to eq data_to
       end
 
       it 'should support several monitor operations' do
-        data_from = [{"interval" => "10", "name" => "monitor"}, {"interval" => "20", "name" => "monitor"}]
-        data_to = [{"interval" => "10", "name" => "monitor"}, {"interval" => "20", "name" => "monitor"}]
+        data_from = [{'interval' => '10', 'name' => 'monitor'}, {'interval' => '20', 'name' => 'monitor'}]
+        data_to = [{'interval' => '10', 'name' => 'monitor'}, {'interval' => '20', 'name' => 'monitor'}]
         instance[:operations] = data_from
         expect(instance[:operations]).to eq data_to
       end
 
       it 'should reset non-monitor operation interval to 0' do
-        data_from = {"start" => {"timeout" => "20", "interval" => "10"}, "stop" => {"interval" => "20", "timeout" => "20"}}
-        data_to = [{"timeout" => "20", "name" => "start", "interval" => "0"}, {"interval" => "0", "name" => "stop", "timeout" => "20",}]
+        data_from = {'start' => {'timeout' => '20', 'interval' => '10'}, 'stop' => {'interval' => '20', 'timeout' => '20'}}
+        data_to = [{'timeout' => '20', 'name' => 'start', 'interval' => '0'}, {'interval' => '0', 'name' => 'stop', 'timeout' => '20', }]
         instance[:operations] = data_from
         expect(instance[:operations]).to eq data_to
       end
 
       it 'should leave array of hashes untouched' do
-        data_from = [{"interval" => "10", "name" => "monitor"}, {"timeout" => "20", "name" => "start", "interval" => "0"}]
-        data_to = [{"interval" => "10", "name" => "monitor"}, {"timeout" => "20", "name" => "start", "interval" => "0"}]
+        data_from = [{'interval' => '10', 'name' => 'monitor'}, {'timeout' => '20', 'name' => 'start', 'interval' => '0'}]
+        data_to = [{'interval' => '10', 'name' => 'monitor'}, {'timeout' => '20', 'name' => 'start', 'interval' => '0'}]
         instance[:operations] = data_from
         expect(instance[:operations]).to eq data_to
       end
 
       it 'should add missing interval values' do
-        data_from = [{"interval" => "10", "name" => "monitor"}, {"timeout" => "20", "name" => "start"}]
-        data_to = [{"interval" => "10", "name" => "monitor"}, {"timeout" => "20", "name" => "start", "interval" => "0"}]
+        data_from = [{'interval' => '10', 'name' => 'monitor'}, {'timeout' => '20', 'name' => 'start'}]
+        data_to = [{'interval' => '10', 'name' => 'monitor'}, {'timeout' => '20', 'name' => 'start', 'interval' => '0'}]
         instance[:operations] = data_from
         expect(instance[:operations]).to eq data_to
       end
 
       it 'should capitalize role value' do
-        data_from = [{"interval" => "10", "name" => "monitor", "role" => "master"}]
-        data_to = [{"interval" => "10", "name" => "monitor", "role" => "Master"}]
+        data_from = [{'interval' => '10', 'name' => 'monitor', 'role' => 'master'}]
+        data_to = [{'interval' => '10', 'name' => 'monitor', 'role' => 'Master'}]
         instance[:operations] = data_from
         expect(instance[:operations]).to eq data_to
       end
@@ -130,7 +129,6 @@ describe Puppet::Type.type(:pcmk_resource) do
         instance[:operations] = data_from
         expect(instance[:operations]).to eq data_to
       end
-
     end
 
     describe 'special insync? conditions' do
@@ -149,25 +147,23 @@ describe Puppet::Type.type(:pcmk_resource) do
 
       it 'should ignore status metadata from complex_metadata hash comparison' do
         complex_metadata = instance.property(:complex_metadata)
-        expect(complex_metadata.insync?({"a" => "1", "target-role" => "Started"})).to be_truthy
+        expect(complex_metadata.insync?('a' => '1', 'target-role' => 'Started')).to be_truthy
       end
 
       it 'should ignore status metadata from metadata hash comparison' do
         metadata = instance.property(:metadata)
-        expect(metadata.insync?({"a" => "2", "is-managed" => "false"})).to be_truthy
+        expect(metadata.insync?('a' => '2', 'is-managed' => 'false')).to be_truthy
       end
 
       it 'should compare non-status complex_metadata' do
         complex_metadata = instance.property(:complex_metadata)
-        expect(complex_metadata.insync?({'a' => 2})).to be_falsey
+        expect(complex_metadata.insync?('a' => 2)).to be_falsey
       end
 
       it 'should compare non-status metadata' do
         metadata = instance.property(:metadata)
-        expect(metadata.insync?({'a' => 1})).to be_falsey
+        expect(metadata.insync?('a' => 1)).to be_falsey
       end
     end
-
   end
-
 end

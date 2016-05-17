@@ -11,20 +11,20 @@ describe Puppet::Type.type(:pcmk_colocation) do
 
   it "should have a 'name' parameter" do
     expect(subject.new(
-               :name => 'mock_resource',
-               :first => 'foo',
-               :second => 'bar',
-           )[:name]
+        name: 'mock_resource',
+        first: 'foo',
+        second: 'bar',
+    )[:name]
     ).to eq 'mock_resource'
   end
 
   describe 'basic structure' do
     it 'should be able to create an instance' do
       expect(subject.new(
-                 :name => 'mock_resource',
-                 :first => 'foo',
-                 :second => 'bar',
-             )).to_not be_nil
+          name: 'mock_resource',
+          first: 'foo',
+          second: 'bar',
+      )).to_not be_nil
     end
 
     [:name].each do |param|
@@ -44,38 +44,38 @@ describe Puppet::Type.type(:pcmk_colocation) do
       it "should have documentation for its #{property} property" do
         expect(subject.propertybyname(property).doc).to be_a String
       end
-
     end
 
     it 'should validate the score values' do
       ['fadsfasdf', nil].each do |value|
         expect { subject.new(
-            :name => 'mock_colocation',
-            :first => 'foo',
-            :second => 'bar',
-            :score => value
-        ) }.to raise_error /score/i
+            name: 'mock_colocation',
+            first: 'foo',
+            second: 'bar',
+            score: value
+        )
+        }.to raise_error(/score/i)
       end
     end
 
     it 'should change inf to INFINITY in score' do
       expect(subject.new(
-                 :name => 'mock_colocation',
-                 :first => 'foo',
-                 :second => 'bar',
-                 :score => 'inf'
-             )[:score]).to eq 'INFINITY'
+          name: 'mock_colocation',
+          first: 'foo',
+          second: 'bar',
+          score: 'inf'
+      )[:score]).to eq 'INFINITY'
     end
 
     describe 'when autorequiring resources' do
       before :each do
         @pcmk_resource_1 = Puppet::Type.type(:pcmk_resource).new(
-            :name => 'foo',
-            :ensure => :present,
+            name: 'foo',
+            ensure: :present,
         )
         @pcmk_resource_2 = Puppet::Type.type(:pcmk_resource).new(
-            :name => 'bar',
-            :ensure => :present,
+            name: 'bar',
+            ensure: :present,
         )
         @catalog = Puppet::Resource::Catalog.new
         @catalog.add_resource @pcmk_resource_1, @pcmk_resource_2
@@ -83,11 +83,12 @@ describe Puppet::Type.type(:pcmk_colocation) do
 
       it 'should autorequire the corresponding resources' do
         @resource = described_class.new(
-            :name => 'dummy',
-            :first => 'foo',
-            :second => 'bar',
-            :score => 'inf',
+            name: 'dummy',
+            first: 'foo',
+            second: 'bar',
+            score: 'inf',
         )
+        @resource.stubs(:autorequire_enabled?).returns(true)
         @catalog.add_resource @resource
         required_resources = @resource.autorequire
         expect(required_resources.size).to eq 2
@@ -98,5 +99,4 @@ describe Puppet::Type.type(:pcmk_colocation) do
       end
     end
   end
-
 end

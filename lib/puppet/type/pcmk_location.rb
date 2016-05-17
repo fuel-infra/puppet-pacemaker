@@ -1,12 +1,13 @@
 require 'puppet/parameter/boolean'
-require_relative '../pacemaker/options'
-require_relative '../pacemaker/type'
+require_relative '../../pacemaker/options'
+require_relative '../../pacemaker/type'
 
 Puppet::Type.newtype(:pcmk_location) do
-  desc %q(Type for manipulating corosync/pacemaker location.  Location
-      is the set of rules defining the place where resource will be run.
-      More information on Corosync/Pacemaker location can be found here:
-      * http://www.clusterlabs.org/doc/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/_ensuring_resources_run_on_the_same_host.html)
+  desc 'Type for manipulating corosync/pacemaker location. Location
+  is the set of rules defining the place where resource will be run.
+  More information on Corosync/Pacemaker location can be found here:
+
+  * http://www.clusterlabs.org/doc/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/_ensuring_resources_run_on_the_same_host.html'
 
   include Pacemaker::Options
   include Pacemaker::Type
@@ -14,28 +15,29 @@ Puppet::Type.newtype(:pcmk_location) do
   ensurable
 
   newparam(:name) do
-    desc %q(Identifier of the location entry.  This value needs to be unique
-        across the entire Corosync/Pacemaker configuration since it doesn\'t have
-        the concept of name spaces per type.)
+    desc "Identifier of the location entry. This value needs to be unique
+    across the entire Corosync/Pacemaker configuration since it doesn't have
+    the concept of name spaces per type."
+
     isnamevar
   end
 
-  newparam(:debug, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-    desc %q(Don't actually make changes)
+  newparam(:debug, boolean: true, parent: Puppet::Parameter::Boolean) do
+    desc "Don't actually make changes"
     defaultto false
   end
 
   newproperty(:primitive) do
-    desc %q(Corosync primitive being managed.)
+    desc 'Corosync primitive being managed.'
   end
 
   newproperty(:score) do
-    desc %q(The score for the node)
+    desc 'The score for the node'
 
     validate do |value|
       break if %w(inf INFINITY -inf -INFINITY).include? value
       break if value.to_i.to_s == value
-      fail 'Score parameter is invalid, should be +/- INFINITY(or inf) or Integer'
+      raise 'Score parameter is invalid, should be +/- INFINITY(or inf) or Integer'
     end
 
     munge do |value|
@@ -43,8 +45,8 @@ Puppet::Type.newtype(:pcmk_location) do
     end
   end
 
-  newproperty(:rules, :array_matching => :all) do
-    desc %q(Specify rules for location)
+  newproperty(:rules, array_matching: :all) do
+    desc 'Specify rules for location'
 
     munge do |rule|
       resource.stringify_data rule
@@ -68,19 +70,23 @@ Puppet::Type.newtype(:pcmk_location) do
     def should_to_s(should)
       resource.inspect_to_s should
     end
-
   end
 
   newproperty(:node) do
-    desc %q(The node for which to apply node score)
+    desc 'The node for which to apply node score'
   end
 
   autorequire(:service) do
-    ['corosync']
+    %w(corosync pacemaker)
+  end
+
+  def autorequire_enabled?
+    pacemaker_options[:autorequire_primitives]
   end
 
   autorequire(:pcmk_resource) do
     resources = []
+    next resources unless autorequire_enabled?
     next resources unless self[:ensure] == :present
     resources << primitive_base_name(self[:primitive]) if self[:primitive]
     debug "Autorequire pcmk_resources: #{resources.join ', '}" if resources.any?
@@ -90,11 +96,11 @@ Puppet::Type.newtype(:pcmk_location) do
   if respond_to? :autobefore
     autobefore(:pcmk_resource) do
       resources = []
+      next resources unless autorequire_enabled?
       next resources unless self[:ensure] == :absent
       resources << primitive_base_name(self[:primitive]) if self[:primitive]
       debug "Autobefore pcmk_resources: #{resources.join ', '}" if resources.any?
       resources
     end
   end
-
 end

@@ -5,8 +5,8 @@ require_relative '../../../../lib/puppet/provider/pcmk_noop'
 describe Puppet::Provider::PcmkNoop do
   let(:resource) do
     Puppet::Type.type(:notify).new(
-        :name => 'test',
-        :message => 'test',
+        name: 'test',
+        message: 'test',
     )
   end
 

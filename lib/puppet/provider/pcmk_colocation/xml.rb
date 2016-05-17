@@ -1,31 +1,29 @@
 require_relative '../pcmk_xml'
 
-Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::PcmkXML) do
-  desc %q(Specific provider for a rather specific type since I currently have no plan to
+Puppet::Type.type(:pcmk_colocation).provide(:xml, parent: Puppet::Provider::PcmkXML) do
+  desc 'Specific provider for a rather specific type since I currently have no plan to
         abstract corosync/pacemaker vs. keepalived.  This provider will check the state
         of current primitive colocations on the system; add, delete, or adjust various
-        aspects.)
+        aspects.'
 
-  commands :cibadmin => 'cibadmin'
-  commands :crm_attribute => 'crm_attribute'
-  commands :crm_node => 'crm_node'
-  commands :crm_resource => 'crm_resource'
-  commands :crm_attribute => 'crm_attribute'
-
-  defaultfor :kernel => 'Linux'
+  commands cibadmin: 'cibadmin'
+  commands crm_attribute: 'crm_attribute'
+  commands crm_node: 'crm_node'
+  commands crm_resource: 'crm_resource'
+  commands crm_attribute: 'crm_attribute'
 
   attr_accessor :property_hash
   attr_accessor :resource
 
   def self.instances
     debug 'Call: self.instances'
-    proxy_instance = self.new
+    proxy_instance = new
     instances = []
     proxy_instance.constraint_colocations.map do |title, data|
       parameters = {}
       debug "Prefetch constraint_colocation: #{title}"
       proxy_instance.retrieve_data data, parameters
-      instance = self.new(parameters)
+      instance = new(parameters)
       instance.cib = proxy_instance.cib
       instances << instance
     end
@@ -47,9 +45,9 @@ Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::P
   # will extract the current colocation data unless a value is provided
   # @param target_structure [Hash] copy data to this structure
   # defaults to the property_hash of this provider
-  def retrieve_data(data=nil, target_structure = property_hash)
+  def retrieve_data(data = nil, target_structure = property_hash)
     data = constraint_colocations.fetch resource[:name], {} unless data
-    target_structure[:name ] = data['id'] if data['id']
+    target_structure[:name] = data['id'] if data['id']
     target_structure[:ensure] = :present
     target_structure[:first] = data['with-rsc'] if data['with-rsc']
     target_structure[:first] += ":#{data['with-rsc-role']}" if data['with-rsc-role']
@@ -77,11 +75,11 @@ Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::P
   def create
     debug 'Call: create'
     self.property_hash = {
-        :name => resource[:name],
-        :ensure => :absent,
-        :first => resource[:first],
-        :second => resource[:second],
-        :score => resource[:score],
+        name: resource[:name],
+        ensure: :absent,
+        first: resource[:first],
+        second: resource[:second],
+        score: resource[:score],
     }
   end
 
@@ -92,7 +90,6 @@ Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::P
     property_hash.clear
     cluster_debug_report "#{resource} destroy"
   end
-
 
   # Getter that obtains the our score that should have been populated by
   # prefetch or instances (depends on if your using puppet resource or not).
@@ -132,18 +129,18 @@ Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::P
   # as stdin for the crm command.
   def flush
     debug 'Call: flush'
-    return unless property_hash and property_hash.any?
+    return unless property_hash && property_hash.any?
 
-    unless property_hash[:name] and property_hash[:score] and property_hash[:first] and property_hash[:second]
-      fail 'Data does not contain all the required fields!'
+    unless property_hash[:name] && property_hash[:score] && property_hash[:first] && property_hash[:second]
+      raise 'Data does not contain all the required fields!'
     end
 
     unless primitive_exists? primitive_base_name property_hash[:first]
-      fail "Primitive '#{property_hash[:first]}' does not exist!"
+      raise "Primitive '#{property_hash[:first]}' does not exist!"
     end
 
     unless primitive_exists? primitive_base_name property_hash[:second]
-      fail "Primitive '#{property_hash[:second]}' does not exist!"
+      raise "Primitive '#{property_hash[:second]}' does not exist!"
     end
 
     colocation_structure = {}
@@ -152,16 +149,15 @@ Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::P
 
     first_element_array = property_hash[:first].split ':'
     second_element_array = property_hash[:second].split ':'
-    
+
     colocation_structure['rsc'] = second_element_array[0]
     colocation_structure['rsc-role'] = second_element_array[1] if second_element_array[1]
     colocation_structure['with-rsc'] = first_element_array[0]
     colocation_structure['with-rsc-role'] = first_element_array[1] if first_element_array[1]
 
-
     colocation_patch = xml_document
     colocation_element = xml_rsc_colocation colocation_structure
-    fail "Could not create XML patch for '#{resource}'" unless colocation_element
+    raise "Could not create XML patch for '#{resource}'" unless colocation_element
     colocation_patch.add_element colocation_element
 
     if present?
@@ -172,4 +168,3 @@ Puppet::Type.type(:pcmk_colocation).provide(:xml, :parent => Puppet::Provider::P
     cluster_debug_report "#{resource} flush"
   end
 end
-

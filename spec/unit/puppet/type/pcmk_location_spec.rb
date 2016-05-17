@@ -8,10 +8,10 @@ describe Puppet::Type.type(:pcmk_location) do
   it 'should have a "name" parameter' do
     expect(
         subject.new(
-            :name => 'mock_resource',
-            :node => 'node',
-            :score => '100',
-            :primitive => 'my_primitive'
+            name: 'mock_resource',
+            node: 'node',
+            score: '100',
+            primitive: 'my_primitive'
         )[:name]
     ).to eq('mock_resource')
   end
@@ -20,10 +20,10 @@ describe Puppet::Type.type(:pcmk_location) do
     it 'should be able to create an instance' do
       expect(
           subject.new(
-              :name => 'mock_resource',
-              :node => 'node',
-              :score => '100',
-              :primitive => 'my_primitive'
+              name: 'mock_resource',
+              node: 'node',
+              score: '100',
+              primitive: 'my_primitive'
           )
       ).to_not be_nil
     end
@@ -46,50 +46,48 @@ describe Puppet::Type.type(:pcmk_location) do
         expect(subject.propertybyname(property).doc).to be_a(String)
       end
     end
-
   end
 
   context 'validation and munging' do
-
     context 'node score' do
       it 'should allow only correct node score values' do
         expect {
           subject.new(
-              :name => 'mock_resource',
-              :primitive => 'my_primitive',
-              :node => 'node',
-              :score => 'test'
+              name: 'mock_resource',
+              primitive: 'my_primitive',
+              node: 'node',
+              score: 'test'
           )
-        }.to raise_error /Score parameter is invalid/
+        }.to raise_error(/Score parameter is invalid/)
         expect(subject.new(
-                   :name => 'mock_resource',
-                   :primitive => 'my_primitive',
-                   :node => 'node',
-                   :score => '100'
-               )).to_not be_nil
+            name: 'mock_resource',
+            primitive: 'my_primitive',
+            node: 'node',
+            score: '100'
+        )).to_not be_nil
         expect(subject.new(
-                   :name => 'mock_resource',
-                   :primitive => 'my_primitive',
-                   :node => 'node',
-                   :score => 'inf'
-               )).to_not be_nil
+            name: 'mock_resource',
+            primitive: 'my_primitive',
+            node: 'node',
+            score: 'inf'
+        )).to_not be_nil
       end
 
       it 'should change inf to INFINITY' do
         expect(
             subject.new(
-                :name => 'mock_resource',
-                :primitive => 'my_primitive',
-                :node => 'node',
-                :score => 'inf'
+                name: 'mock_resource',
+                primitive: 'my_primitive',
+                node: 'node',
+                score: 'inf'
             )[:score]
         ).to eq 'INFINITY'
         expect(
             subject.new(
-                :name => 'mock_resource',
-                :primitive => 'my_primitive',
-                :node => 'node',
-                :score => '-inf'
+                name: 'mock_resource',
+                primitive: 'my_primitive',
+                node: 'node',
+                score: '-inf'
             )[:score]
         ).to eq '-INFINITY'
       end
@@ -99,121 +97,113 @@ describe Puppet::Type.type(:pcmk_location) do
       it 'should stringify keys and values' do
         expect(
             subject.new(
-                :name => 'mock_resource',
-                :primitive => 'my_primitive',
-                :rules => {
+                name: 'mock_resource',
+                primitive: 'my_primitive',
+                rules: {
                     'id' => 'test',
                     'boolean-op' => :or,
                     :a => 1,
                     2 => :c
                 }
             )[:rules].first
-        ).to eq({
-                    'boolean-op' => 'or',
-                    'id' => 'test',
-                    '2' => 'c',
-                    'a' => '1'
-                })
+        ).to eq('boolean-op' => 'or',
+                'id' => 'test',
+                '2' => 'c',
+                'a' => '1')
       end
       it 'should generate missing rule id' do
         expect(
             subject.new(
-                :name => 'mock_resource',
-                :primitive => 'my_primitive',
-                :rules => {
+                name: 'mock_resource',
+                primitive: 'my_primitive',
+                rules: {
                     'a' => '1',
                     'boolean-op' => 'or'
                 }
             )[:rules].first
-        ).to eq({
-                    'boolean-op' => 'or',
-                    'id' => 'mock_resource-rule-0',
-                    'a' => '1'
-                })
+        ).to eq('boolean-op' => 'or',
+                'id' => 'mock_resource-rule-0',
+                'a' => '1')
       end
       it 'should add missing boolean-op' do
         expect(
             subject.new(
-                :name => 'mock_resource',
-                :primitive => 'my_primitive',
-                :rules => {
+                name: 'mock_resource',
+                primitive: 'my_primitive',
+                rules: {
                     'id' => 'test'
                 }
             )[:rules].first
-        ).to eq({
-                    'boolean-op' => 'or',
-                    'id' => 'test'
-                })
+        ).to eq('boolean-op' => 'or',
+                'id' => 'test')
       end
       it 'should change rule score from inf to INFINITY' do
         expect(
             subject.new(
-                :name => 'mock_resource',
-                :primitive => 'my_primitive',
-                :rules => {
+                name: 'mock_resource',
+                primitive: 'my_primitive',
+                rules: {
                     'id' => 'test',
                     'boolean-op' => 'and',
                     'score' => 'inf'
                 }
             )[:rules].first
-        ).to eq({
-                    'boolean-op' => 'and',
-                    'id' => 'test',
-                    'score' => 'INFINITY'
-                })
+        ).to eq('boolean-op' => 'and',
+                'id' => 'test',
+                'score' => 'INFINITY')
       end
       it 'should generate missing expression id' do
         expect(
             subject.new(
-                :name => 'mock_resource',
-                :primitive => 'my_primitive',
-                :rules => {
-                    :score => 'inf',
-                    :id => 'test',
-                    :expressions => [
+                name: 'mock_resource',
+                primitive: 'my_primitive',
+                rules: {
+                    score: 'inf',
+                    id: 'test',
+                    expressions: [
                         {
-                            :attribute => 'pingd1',
-                            :operation => 'defined',
-                            :id => 'first_expression',
+                            attribute: 'pingd1',
+                            operation: 'defined',
+                            id: 'first_expression',
                         },
                         {
-                            :attribute => 'pingd2',
-                            :operation => 'defined',
+                            attribute: 'pingd2',
+                            operation: 'defined',
                         }
                     ]
                 }
             )[:rules].first
-        ).to eq({'score' => 'INFINITY', 'id' => 'test', 'boolean-op' => 'or',
-                 'expressions' => [
-                     {
-                         'operation' => 'defined',
-                         'attribute' => 'pingd1',
-                         'id' => 'first_expression',
-                     },
-                     {
-                         'operation' => 'defined',
-                         'attribute' => 'pingd2',
-                         'id' => 'mock_resource-rule-0-expression-1',
-                     }
-                 ]
-                })
+        ).to eq('score' => 'INFINITY', 'id' => 'test', 'boolean-op' => 'or',
+                'expressions' => [
+                    {
+                        'operation' => 'defined',
+                        'attribute' => 'pingd1',
+                        'id' => 'first_expression',
+                    },
+                    {
+                        'operation' => 'defined',
+                        'attribute' => 'pingd2',
+                        'id' => 'mock_resource-rule-0-expression-1',
+                    }
+                ])
       end
     end
 
     context '#autorequire' do
       it 'should autorequire the corresponding resources' do
         pcmk_resource = Puppet::Type.type(:pcmk_resource).new(
-          :name => 'my_primitive',
-          :ensure => :present,
+            name: 'my_primitive',
+            ensure: :present,
         )
         catalog = Puppet::Resource::Catalog.new
         catalog.add_resource pcmk_resource
         pcmk_location = Puppet::Type.type(:pcmk_location).new(
-          :name => 'mock_resource',
-          :primitive => 'my_primitive',
-          :node => 'node',
-          :score => 'inf'
+            name: 'mock_resource',
+            primitive: 'my_primitive',
+            node: 'node',
+            score: 'inf'
         )
+        pcmk_location.stubs(:autorequire_enabled?).returns(true)
         catalog.add_resource pcmk_location
         required_resources = pcmk_location.autorequire
         expect(required_resources.size).to eq 1
@@ -222,5 +212,4 @@ describe Puppet::Type.type(:pcmk_location) do
       end
     end
   end
-
 end
