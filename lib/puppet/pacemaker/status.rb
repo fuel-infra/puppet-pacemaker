@@ -87,8 +87,9 @@ module Pacemaker
 
     # decode lrm_resources section of CIB
     # @param lrm_resources [REXML::Element]
+    # @param [String] node_name
     # @return [Hash<String => Hash>]
-    def decode_lrm_resources(lrm_resources)
+    def decode_lrm_resources(lrm_resources, node_name=nil)
       resources = {}
       lrm_resources.each do |lrm_resource|
         resource = attributes_to_hash lrm_resource
@@ -100,6 +101,7 @@ module Pacemaker
         resource.store 'ops', ops
         resource.store 'status', determine_primitive_status(ops)
         resource.store 'failed', failed_operations_found?(ops)
+        debug resource_operations_report ops, resource, node_name if pacemaker_options[:debug_show_operations]
         resources.store id, resource
       end
       resources
@@ -131,7 +133,7 @@ module Pacemaker
         next unless lrm
         lrm_resources = cib_section_lrm_resources lrm
         next unless lrm_resources
-        resources = decode_lrm_resources lrm_resources
+        resources = decode_lrm_resources lrm_resources, node_name
         node.store 'primitives', resources
         @node_status_structure.store node_name, node
       end
@@ -144,8 +146,9 @@ module Pacemaker
     # @return [TrueClass,FalseClass]
     def failed_operations_found?(ops)
       ops.each do |op|
-        # skip incompleate ops
-        next unless op['op-status'] == '0'
+        # skip pending ops
+        next if op['op-status'] == '-1'
+
         # skip useless ops
         next unless %w(start stop monitor promote).include? op['operation']
 
@@ -207,8 +210,8 @@ module Pacemaker
             fetch(primitive, {}).
             fetch('failed', nil)
       else
-        node_status.each do |k, v|
-          failed = v.fetch('primitives', {}).
+        node_status.each do |_node_name, node_status|
+          failed = node_status.fetch('primitives', {}).
               fetch(primitive, {}).
               fetch('failed', nil)
           return true if failed

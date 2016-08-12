@@ -5,7 +5,7 @@
 # how long to wait between retries (seconds)
 :retry_step: 5
 
-# how long to wait for a single commnand to finish running (seconds)
+# how long to wait for a single command to finish running (seconds)
 :retry_timeout: 60
 
 # count false or nil block return values as failures or only exceptions?
@@ -18,6 +18,9 @@
 :debug_show_properties:
 - symmetric-cluster
 - no-quorum-policy
+
+# Show the debug messages for the resource operations status calculation
+:debug_show_operations: true
 
 # don't actually do any changes to the system
 # only show what command would have been run
@@ -74,8 +77,10 @@
 # and skip restart if it's running elsewhere
 :restart_only_if_local: true
 
-# cleanup the primitive before the status action.
-:cleanup_on_status: false
+# set the primitive status to stopped if there are failures
+# forcing the primitive to be started again and cleaned up
+# on this node
+:cleanup_on_status: true
 
 # cleanup the primitive before the start action
 :cleanup_on_start: true
@@ -98,3 +103,4 @@
 :status_meta_attributes:
 - target-role
 - is-managed
+

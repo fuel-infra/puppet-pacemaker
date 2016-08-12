@@ -304,14 +304,14 @@ describe Puppet::Provider::PcmkXML do
 
     it 'can determine if primitive is failed or not globally' do
       expect(subject.primitive_has_failures? 'p_ceilometer-agent-central').to eq true
-      expect(subject.primitive_has_failures? 'p_heat-engine').to eq false
+      expect(subject.primitive_has_failures? 'p_heat-engine').to eq true
       expect(subject.primitive_has_failures? 'UNKNOWN').to eq nil
     end
 
     it 'can determine if primitive is failed or not locally' do
       expect(subject.primitive_has_failures? 'p_ceilometer-agent-central', 'node-1').to eq false
       expect(subject.primitive_has_failures? 'p_ceilometer-agent-central', 'node-2').to eq true
-      expect(subject.primitive_has_failures? 'p_heat-engine', 'node-1').to eq false
+      expect(subject.primitive_has_failures? 'p_heat-engine', 'node-1').to eq true
       expect(subject.primitive_has_failures? 'p_heat-engine', 'node-2').to eq false
       expect(subject.primitive_has_failures? 'UNKNOWN', 'node-1').to eq nil
     end
