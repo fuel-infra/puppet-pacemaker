@@ -53,7 +53,7 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
       variations << "p_#{name}"
     end
 
-    simple_name =  name.gsub(/^(ms-)|(clone-)/, '')
+    simple_name = name.gsub(/^(ms-)|(clone-)/, '')
     unless simple_name == name
       variations << simple_name
       if simple_name.start_with? 'p_'
@@ -232,7 +232,7 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
   def restart
     debug "Call 'restart' for Pacemaker service '#{name}' on node '#{hostname}'"
     if pacemaker_options[:restart_only_if_local] and not primitive_is_running? name, hostname
-      Puppet.info "Pacemaker service '#{name}' is not running on node '#{hostname}'. Skipping restart!"
+      info "Pacemaker service '#{name}' is not running on node '#{hostname}'. Skipping restart!"
       return
     end
 
@@ -319,47 +319,103 @@ Puppet::Type.type(:service).provide(:pacemaker, :parent => Puppet::Provider::Pcm
     out
   end
 
-  # create an extra provider instance to deal with the basic service
-  # the provider will be chosen to match the current system
-  # @return [Puppet::Type::Service::Provider]
-  def extra_provider(provider_name = nil)
-    return @extra_provider if @extra_provider
-    begin
-      param_hash = {}
-      param_hash.store :name, basic_service_name
-      param_hash.store :provider, provider_name if provider_name
-      type = Puppet::Type::Service.new param_hash
-      @extra_provider = type.provider
-    rescue => e
-      Puppet.info "Could not get extra provider for Pacemaker primitive '#{name}': #{e.message}"
-      @extra_provider = nil
+  # check if this service provider class is enabled
+  # and can be used
+  # @param [Class] provider_class
+  # @return [true,false]
+  def service_provider_enabled?(provider_class)
+    return false if self.is_a? provider_class
+    return true unless pacemaker_options[:disabled_basic_service_providers].is_a? Array
+    return true unless pacemaker_options[:disabled_basic_service_providers].any?
+    not pacemaker_options[:disabled_basic_service_providers].include? provider_class.name.to_s
+  end
+
+  # get a list of the provider names which could be used on the
+  # current system to manage the basic service.
+  # @return [Array<Symbol>]
+  def suitable_providers
+    return @suitable_providers if @suitable_providers
+    @suitable_providers = []
+    [
+        @resource.class.defaultprovider,
+        @resource.class.suitableprovider,
+    ].flatten.uniq.each do |provider_class|
+      if service_provider_enabled? provider_class
+        @suitable_providers << provider_class.name
+      end
     end
+    @suitable_providers
+  end
+
+  attr_writer :suitable_providers
+
+  # Get the parameters hash from the resource object
+  # which can be used to create additional instances with
+  # the same parameters.
+  # @return [Hash<Symbol => Object>]
+  def parameters_hash(provider_class_name=nil)
+    parameters_hash = {}
+    @resource.parameters_with_value.each do |parameter|
+      parameters_hash.store parameter.name, parameter.value
+    end
+    parameters_hash.store :name, basic_service_name
+    parameters_hash.store :provider, provider_class_name if provider_class_name
+    parameters_hash
+  end
+
+  # @return [Array<Puppet::Type::Service::Provider>]
+  def extra_providers
+    return @extra_providers if @extra_providers
+    @extra_providers = []
+    suitable_providers.each do |provider_class_name|
+      begin
+        type = @resource.class.new parameters_hash provider_class_name
+        @extra_providers << type.provider
+      rescue => e
+        info "Could not get an extra provider for the Pacemaker primitive '#{name}': #{e.message}"
+        next
+      end
+    end
+    @extra_providers
+  end
+
+  # check if this provider is native service based and the basic
+  # service should not be disabled
+  # @return [true,false]
+  def native_based_primitive?
+    return false unless pacemaker_options[:native_based_primitive_classes].is_a? Array
+    return false unless pacemaker_options[:native_based_primitive_classes].any?
+    pacemaker_options[:native_based_primitive_classes].include? primitive_class name
   end
 
   # disable and stop the basic service
+  # using all suitable providers
   def disable_basic_service
     # skip native-based primitive classes
-    if pacemaker_options[:native_based_primitive_classes].include?(primitive_class name)
-      Puppet.info "Not stopping basic service '#{basic_service_name}', since its Pacemaker primitive is using primitive_class '#{primitive_class name}'"
+    if native_based_primitive?
+      info "Not stopping basic service '#{basic_service_name}', since its Pacemaker primitive is using primitive_class '#{primitive_class name}'"
       return
     end
 
-    return unless extra_provider
-    begin
-      if extra_provider.enableable? and extra_provider.enabled? == :true
-        Puppet.info "Disable basic service '#{extra_provider.name}' using provider '#{extra_provider.class.name}'"
-        extra_provider.disable
-      else
-        Puppet.info "Basic service '#{extra_provider.name}' is disabled as reported by '#{extra_provider.class.name}' provider"
+    return unless extra_providers.is_a? Array and extra_providers.any?
+    extra_providers.each do |extra_provider|
+      begin
+        if extra_provider.enableable? and extra_provider.enabled? == :true
+          info "Disable basic service '#{extra_provider.name}' using provider '#{extra_provider.class.name}'"
+          extra_provider.disable
+        else
+          info "Basic service '#{extra_provider.name}' is disabled as reported by '#{extra_provider.class.name}' provider"
+        end
+        if extra_provider.status == :running
+          info "Stop basic service '#{extra_provider.name}' using provider '#{extra_provider.class.name}'"
+          extra_provider.stop
+        else
+          info "Basic service '#{extra_provider.name}' is stopped as reported by '#{extra_provider.class.name}' provider"
+        end
+      rescue => e
+        info "Could not disable basic service for Pacemaker primitive '#{name}' using '#{extra_provider.class.name}' provider: #{e.message}"
+        next
       end
-      if extra_provider.status == :running
-        Puppet.info "Stop basic service '#{extra_provider.name}' using provider '#{extra_provider.class.name}'"
-        extra_provider.stop
-      else
-        Puppet.info "Basic service '#{extra_provider.name}' is stopped as reported by '#{extra_provider.class.name}' provider"
-      end
-    rescue => e
-      Puppet.info "Could not disable basic service for Pacemaker primitive '#{name}' using '#{extra_provider.class.name}' provider: #{e.message}"
     end
   end
 

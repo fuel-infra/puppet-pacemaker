@@ -304,36 +304,42 @@ describe Puppet::Type.type(:service).provider(:pacemaker) do
 
   context 'basic service handling' do
     before :each do
-      @extra_provider = provider.extra_provider
       provider.unstub(:disable_basic_service)
-      @extra_provider.stubs(:enableable?).returns true
-      @extra_provider.stubs(:enabled?).returns :true
-      @extra_provider.stubs(:disable).returns true
-      @extra_provider.stubs(:stop).returns true
-      @extra_provider.stubs(:status).returns :running
-      provider.stubs(:extra_provider).returns @extra_provider
+      provider.suitable_providers = [:base, :service]
+      provider.extra_providers.each do |extra_provider|
+        extra_provider.stubs(:enableable?).returns true
+        extra_provider.stubs(:enabled?).returns :true
+        extra_provider.stubs(:disable).returns true
+        extra_provider.stubs(:stop).returns true
+        extra_provider.stubs(:status).returns :running
+      end
     end
 
     it 'tries to disable the basic service if it is enabled' do
-      @extra_provider.expects(:disable).once
+      provider.extra_providers.first.expects(:disable).once
+      provider.extra_providers.last.expects(:disable).once
       provider.disable_basic_service
     end
 
     it 'tries to stop the service if it is running' do
-      @extra_provider.expects(:stop).once
+      provider.extra_providers.first.expects(:stop).once
+      provider.extra_providers.last.expects(:stop).once
       provider.disable_basic_service
     end
 
     it 'does not try to stop a systemd running service' do
       provider.stubs(:primitive_class).returns('systemd')
-      @extra_provider.unstub(:stop)
-      @extra_provider.expects(:stop).never
+      provider.extra_providers.first.unstub(:stop)
+      provider.extra_providers.last.unstub(:stop)
+      provider.extra_providers.first.expects(:stop).never
+      provider.extra_providers.last.expects(:stop).never
       provider.disable_basic_service
     end
 
     it 'stops an ocf based service' do
       provider.stubs(:primitive_class).returns('ocf')
-      provider.extra_provider.expects(:stop).once
+      provider.extra_providers.first.expects(:stop).once
+      provider.extra_providers.last.expects(:stop).once
       provider.disable_basic_service
     end
   end

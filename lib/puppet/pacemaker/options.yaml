@@ -20,7 +20,7 @@
 - no-quorum-policy
 
 # Show the debug messages for the resource operations status calculation
-:debug_show_operations: true
+:debug_show_operations: false
 
 # don't actually do any changes to the system
 # only show what command would have been run
@@ -104,3 +104,7 @@
 - target-role
 - is-managed
 
+# these providers should never be tried in order to disable the basic service
+:disabled_basic_service_providers:
+- service
+- base
